@@ -7,7 +7,8 @@ defmodule Membrane.VideoCutter do
                 spec: [{pos_integer(), pos_integer() | :infinity}],
                 default: [{0, :infinity}],
                 description: """
-                List of intervals of timestamps. The buffer is forwarder when its timestamp belongs to any of the given intervals. The start of the interval is inclusive and the end is exclusive.
+                List of intervals of timestamps. The buffer is forwarded when its timestamp belongs to any of the given intervals.
+                The start of the interval is inclusive and the end is exclusive.
                 By default, the cutter is initialized with a single interval [0, :infinity)
                 """
               ],
