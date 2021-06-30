@@ -4,19 +4,22 @@ defmodule Membrane.VideoCutter do
   alias Membrane.Caps.Video.Raw
 
   def_options intervals: [
-                spec: [{pos_integer(), pos_integer() | :infinity}],
+                spec: [{Membrane.Time.t(), Membrane.Time.t() | :infinity}],
                 default: [{0, :infinity}],
                 description: """
-                List of intervals of timestamps. The buffer is forwarder when its timestamp belongs to any of the given intervals. The start of the interval is inclusive and the end is exclusive.
-                By default, the cutter is initialized with a single interval [0, :infinity)
+                List of intervals of timestamps. The buffer is forwarder when its timestamp belongs
+                to any of the given intervals. The start of the interval is inclusive and the end is
+                exclusive. By default, the cutter is initialized with a single interval [0, :infinity)
                 """
               ],
               offset: [
-                spec: pos_integer(),
+                spec: Membrane.Time.t(),
                 default: 0,
                 description: """
-                Offset is applied to all output frames pts values. It allows to logically shift the video to express its real starting point. For example, if there are two streams and
-                the second one begins two seconds after the first one, video cutter that processes the second stream should apply a 2sec offset. Offset is applied after cutting phase.
+                Offset is applied to all output frames pts values. It allows to logically shift the
+                video to express its real starting point. For example, if there are two streams and
+                the second one begins two seconds after the first one, video cutter that processes
+                the second stream should apply a 2sec offset. Offset is applied after the cutting phase.
                 """
               ]
 
@@ -46,7 +49,7 @@ defmodule Membrane.VideoCutter do
     if not Map.has_key?(buffer.metadata, :pts), do: raise("Cannot cut stream without pts")
 
     buffer_action =
-      if check_buffer(buffer.metadata.pts, state.intervals),
+      if within_any_interval(buffer.metadata.pts, state.intervals),
         do: [buffer: {:output, [apply_offset(buffer, state.offset)]}],
         else: []
 
@@ -64,7 +67,7 @@ defmodule Membrane.VideoCutter do
     Bunch.Struct.update_in(buffer, [:metadata, :pts], &Ratio.add(&1, offset))
   end
 
-  defp check_buffer(timestamp, intervals) do
+  defp within_any_interval(timestamp, intervals) do
     use Ratio
 
     Enum.any?(intervals, fn

@@ -15,7 +15,7 @@ defmodule Membrane.VideoMerger.VideoCutterTest do
         file_src: %Membrane.File.Source{
           chunk_size: 40_960,
           location:
-            "/Users/andrzej/Membrane/membrane_video_merger_plugin/test/fixtures/test_video_10s.h264"
+            "./test/fixtures/test_video_10s.h264"
         },
         parser: %H264.FFmpeg.Parser{framerate: {@framerate, 1}},
         decoder: %H264.FFmpeg.Decoder{add_pts?: true},
