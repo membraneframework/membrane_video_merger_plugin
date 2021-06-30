@@ -7,19 +7,18 @@ defmodule Membrane.VideoCutter do
                 spec: [{Membrane.Time.t(), Membrane.Time.t() | :infinity}],
                 default: [{0, :infinity}],
                 description: """
-                List of intervals of timestamps. The buffer is forwarder when its timestamp belongs
-                to any of the given intervals. The start of the interval is inclusive and the end is
-                exclusive. By default, the cutter is initialized with a single interval [0, :infinity)
+                List of intervals of timestamps. The buffer is forwarded when its timestamp belongs to any of the given intervals.
+                The start of the interval is inclusive and the end is exclusive.
+                By default, the cutter is initialized with a single interval [0, :infinity)
                 """
               ],
               offset: [
                 spec: Membrane.Time.t(),
                 default: 0,
                 description: """
-                Offset is applied to all output frames pts values. It allows to logically shift the
-                video to express its real starting point. For example, if there are two streams and
-                the second one begins two seconds after the first one, video cutter that processes
-                the second stream should apply a 2sec offset. Offset is applied after the cutting phase.
+                Offset applied to all cut frames' PTS values. It allows to logically shift the video to express its real starting point.
+                For example, if there are two streams and the second one begins two seconds after the first one,
+                video cutter that processes the second stream should apply a 2sec offset. Offset is applied after cutting phase.
                 """
               ]
 
