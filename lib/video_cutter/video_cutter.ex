@@ -15,8 +15,9 @@ defmodule Membrane.VideoCutter do
                 spec: pos_integer(),
                 default: 0,
                 description: """
-                Offset is applied to all output frames pts values. It allows to logically shift the video to express its real starting point. For example, if there are two streams and
-                the second one begins two seconds after the first one, video cutter that processes the second stream should apply a 2sec offset. Offset is applied after cutting phase.
+                Offset applied to all cut frames' PTS values. It allows to logically shift the video to express its real starting point.
+                For example, if there are two streams and the second one begins two seconds after the first one,
+                video cutter that processes the second stream should apply a 2sec offset. Offset is applied after cutting phase.
                 """
               ]
 
