@@ -1,6 +1,8 @@
 defmodule Membrane.VideoCutter do
+  @moduledoc """
+  Membrane element that cuts video.
+  """
   use Membrane.Filter
-
   alias Membrane.Caps.Video.Raw
 
   def_options intervals: [
@@ -44,29 +46,28 @@ defmodule Membrane.VideoCutter do
     {:ok, state}
   end
 
+  @impl true
   def handle_process(:input, buffer, _ctx, state) do
     if not Map.has_key?(buffer.metadata, :pts), do: raise("Cannot cut stream without pts")
 
-    buffer_action =
-      if within_any_interval(buffer.metadata.pts, state.intervals),
+    actions =
+      if within_any_interval?(buffer.metadata.pts, state.intervals),
         do: [buffer: {:output, [apply_offset(buffer, state.offset)]}],
-        else: []
-
-    actions = buffer_action ++ [redemand: :output]
+        else: [redemand: :output]
 
     {{:ok, actions}, state}
   end
 
   @impl true
   def handle_end_of_stream(:input, _ctx, state) do
-    {{:ok, [end_of_stream: :output, notify: {:end_of_stream, :input}]}, state}
+    {{:ok, end_of_stream: :output, notify: {:end_of_stream, :input}}, state}
   end
 
   defp apply_offset(buffer, offset) do
     Bunch.Struct.update_in(buffer, [:metadata, :pts], &Ratio.add(&1, offset))
   end
 
-  defp within_any_interval(timestamp, intervals) do
+  defp within_any_interval?(timestamp, intervals) do
     use Ratio
 
     Enum.any?(intervals, fn
