@@ -2,10 +2,10 @@ defmodule Membrane.VideoMerger.VideoCutterTest do
   use ExUnit.Case, async: true
 
   import Membrane.Testing.Assertions
-  alias Membrane.VideoCutter
   alias Membrane.H264
   alias Membrane.Testing
   alias Membrane.Time
+  alias Membrane.VideoCutter
 
   @framerate 30
 
@@ -14,8 +14,7 @@ defmodule Membrane.VideoMerger.VideoCutterTest do
       elements: [
         file_src: %Membrane.File.Source{
           chunk_size: 40_960,
-          location:
-            "./test/fixtures/test_video_10s.h264"
+          location: "./test/fixtures/test_video_10s.h264"
         },
         parser: %H264.FFmpeg.Parser{framerate: {@framerate, 1}},
         decoder: %H264.FFmpeg.Decoder{add_pts?: true},
@@ -34,7 +33,8 @@ defmodule Membrane.VideoMerger.VideoCutterTest do
     }
 
     # input video has 10[s] * 30[frames/s] = 300[frames]
-    # there should be 300[frames] - (4-1)[s] * 30[frames/s] = 210[frames] on the testing sink with the following timestamps
+    # there should be 300[frames] - (4-1)[s] * 30[frames/s] = 210[frames]
+    # on the testing sink with the following timestamps
     first_interval_pts_list = for i <- 0..29, do: Ratio.mult(frame_duration, i)
     second_interval_pts_list = for i <- 120..299, do: Ratio.mult(frame_duration, i)
     expected_pts_list = first_interval_pts_list ++ second_interval_pts_list
