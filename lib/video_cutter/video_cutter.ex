@@ -25,10 +25,10 @@ defmodule Membrane.VideoCutter do
               ]
 
   def_output_pad :output,
-    caps: {Raw, format: one_of([:I420, :I422]), aligned: true}
+    caps: {Raw, aligned: true}
 
   def_input_pad :input,
-    caps: {Raw, format: one_of([:I420, :I422]), aligned: true},
+    caps: {Raw, aligned: true},
     demand_unit: :buffers
 
   @impl true
