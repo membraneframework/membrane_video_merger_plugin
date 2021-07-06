@@ -1,6 +1,13 @@
 defmodule Membrane.VideoCutter do
   @moduledoc """
-  Membrane element that cuts video.
+  Membrane element that cuts raw video.
+
+  The element expects each frame to be received in a separate buffer, so the parser
+  (`Membrane.Element.RawVideo.Parser`) may be required in a pipeline before
+  the encoder (e.g. when input is read from `Membrane.File.Source`).
+
+  To use this element, specify the desired intervals in the `intervals` options -
+  `VideoCutter` will "filter" out all frames with timestamps outside of them.
   """
   use Membrane.Filter
   alias Membrane.Caps.Video.Raw
@@ -11,14 +18,17 @@ defmodule Membrane.VideoCutter do
                 description: """
                 List of intervals of timestamps. The buffer is forwarded when its timestamp belongs to any of the given intervals.
                 The start of the interval is inclusive and the end is exclusive.
-                By default, the cutter is initialized with a single interval [0, :infinity)
+
+                For example, to cut part starting from 190 ms up to 1530 ms out of the video,
+                the `intervals` should be set to `[{0, Membrane.Time.miliseconds(190)}, {Membrane.Time.miliseconds(1530), :infinity}]`.
                 """
               ],
               offset: [
                 spec: Membrane.Time.t(),
                 default: 0,
                 description: """
-                Offset applied to all cut frames' PTS values. It allows to logically shift the video to express its real starting point.
+                Offset applied to all cut frames' presentation timestamp (PTS) values. It allows to logically shift the video to express its real starting point.
+
                 For example, if there are two streams and the second one begins two seconds after the first one,
                 video cutter that processes the second stream should apply a 2sec offset. Offset is applied after cutting phase.
                 """
