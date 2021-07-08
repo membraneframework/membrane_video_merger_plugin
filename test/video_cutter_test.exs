@@ -18,7 +18,7 @@ defmodule Membrane.VideoMerger.VideoCutterTest do
           location: "./test/fixtures/test_video_10s.h264"
         },
         parser: %H264.FFmpeg.Parser{framerate: {@framerate, 1}},
-        decoder: %H264.FFmpeg.Decoder{add_pts?: true},
+        decoder: H264.FFmpeg.Decoder,
         video_cutter: video_cutter,
         sink: Testing.Sink
       ]
