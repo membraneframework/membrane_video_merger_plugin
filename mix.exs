@@ -42,10 +42,9 @@ defmodule Membrane.Template.Mixfile do
       {:credo, "~> 1.4", only: :dev, runtime: false},
       {:membrane_caps_video_raw, "~> 0.1.0"},
       {:membrane_h264_ffmpeg_plugin,
-       github: "membraneframework/membrane_h264_ffmpeg_plugin",
-       branch: "pts-timestamps",
-       only: :test},
-      {:membrane_file_plugin, "~> 0.6.0", only: :test}
+       github: "membraneframework/membrane_h264_ffmpeg_plugin", branch: "master", only: :test},
+      {:membrane_file_plugin, "~> 0.6.0", only: :test},
+      {:ratio, "~> 2.4"}
     ]
   end
 
