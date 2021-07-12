@@ -7,6 +7,10 @@ defmodule Membrane.VideoMerger do
   the encoder (e.g. when input is read from `Membrane.File.Source`).
 
   The element expects to receive frames in order from each input.
+
+  Currently, `VideoMerger` may not be suitable for live merging streams: the element
+  awaits for at least one frame from each of the inputs, and forwards the one
+  with the lowest presentation timestamp.
   """
 
   use Membrane.Filter
@@ -37,14 +41,10 @@ defmodule Membrane.VideoMerger do
   end
 
   @impl true
-  def handle_end_of_stream({_pad, :input, id}, _ctx, state) do
-    case Map.delete(state, id) do
-      map when map_size(map) == 0 ->
-        {{:ok, end_of_stream: :output}, %{}}
-
-      new_state ->
-        buffers_or_actions(new_state)
-    end
+  def handle_end_of_stream({_pad, :input, id} = pad_ref, _ctx, state) do
+    state
+    |> Map.update!(id, &(&1 ++ [:end_of_stream]))
+    |> get_actions(notify: pad_ref)
   end
 
   @impl true
@@ -53,19 +53,17 @@ defmodule Membrane.VideoMerger do
   end
 
   @impl true
-  def handle_pad_removed({_pad, :input, id}, _ctx, state) do
-    state
-    |> Map.delete(id)
-    |> buffers_or_actions()
-  end
+  def handle_process(pad, buffer, ctx, state), do: handle_process_list(pad, [buffer], ctx, state)
 
   @impl true
-  def handle_process({_pad, :input, id}, buffer, _ctx, state) do
-    if not Map.has_key?(buffer.metadata, :pts), do: raise("Cannot merge stream without pts")
+  def handle_process_list({_pad, :input, id}, buffers, _context, state) do
+    if not Enum.all?(buffers, &Map.has_key?(&1.metadata, :pts)) do
+      raise("Cannot merge stream without pts")
+    end
 
     state
-    |> Map.update!(id, &(&1 ++ [buffer]))
-    |> buffers_or_actions(redemand: :output)
+    |> Map.update!(id, &(&1 ++ buffers))
+    |> get_actions(redemand: :output)
   end
 
   defp get_empty_inputs(state) do
@@ -74,10 +72,16 @@ defmodule Membrane.VideoMerger do
     |> Enum.map(fn {id, _val} -> id end)
   end
 
-  defp buffers_or_actions(state, fallback \\ []) do
+  defp get_actions(state, fallback) do
     case get_buffers(state) do
-      {[], _new_state} ->
-        {{:ok, fallback}, state}
+      {[], new_state} when new_state == %{} ->
+        {{:ok, [end_of_stream: :output] ++ fallback}, %{}}
+
+      {buffers, new_state} when new_state == %{} ->
+        {{:ok, [end_of_stream: :output, buffers: buffers] ++ fallback}, %{}}
+
+      {[], new_state} ->
+        {{:ok, fallback}, new_state}
 
       {buffers, new_state} ->
         {{:ok, buffer: {:output, buffers}}, new_state}
@@ -89,6 +93,10 @@ defmodule Membrane.VideoMerger do
       nil ->
         {Enum.reverse(curr), state}
 
+      {id, :end_of_stream} ->
+        new_state = Map.delete(state, id)
+        get_buffers(new_state, curr)
+
       {id, buffer} ->
         new_state = Map.update!(state, id, &tl/1)
         get_buffers(new_state, [buffer | curr])
@@ -98,6 +106,7 @@ defmodule Membrane.VideoMerger do
   defp get_buffer(list, current \\ nil)
   defp get_buffer([], curr), do: curr
   defp get_buffer([{_id, []} | _tail], _curr), do: nil
+  defp get_buffer([{id, [:end_of_stream]} | _tail], nil), do: {id, :end_of_stream}
   defp get_buffer([{id, [hd_buffer | _rest]} | tail], nil), do: get_buffer(tail, {id, hd_buffer})
 
   defp get_buffer([{id_l, [buffer_l | _rest]} | tail], {_id_r, buffer_r} = curr) do
