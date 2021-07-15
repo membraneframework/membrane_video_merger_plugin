@@ -16,6 +16,9 @@ defmodule Membrane.VideoMerger do
   use Membrane.Filter
   alias Membrane.Caps.Video.Raw
   alias Membrane.Pad
+  alias Membrane.Buffer
+
+  @eos %Buffer{metadata: %{pts: -1}, payload: :end_of_stream}
 
   def_input_pad :input,
     caps: {Raw, aligned: true},
@@ -43,7 +46,7 @@ defmodule Membrane.VideoMerger do
   @impl true
   def handle_end_of_stream({_pad, :input, id} = pad_ref, _ctx, state) do
     state
-    |> Map.update!(id, &(&1 ++ [:end_of_stream]))
+    |> Map.update!(id, &(&1 ++ [@eos]))
     |> get_actions(notify: pad_ref)
   end
 
@@ -85,37 +88,23 @@ defmodule Membrane.VideoMerger do
     end
   end
 
-  defp get_buffers(state, curr \\ []) do
-    case get_buffer(Map.to_list(state)) do
-      nil ->
-        {Enum.reverse(curr), state}
+  defp get_buffers(state, curr \\ [])
+  defp get_buffers(state, _curr) when state == %{}, do: {[], state}
 
-      {id, :end_of_stream} ->
+  defp get_buffers(state, curr) do
+    if Enum.any?(state, fn {_id, buffers} -> buffers == [] end) do
+      {Enum.reverse(curr), state}
+    else
+      {id, [buffer | _rest]} =
+        Enum.min_by(state, fn {_id, [x | _rest]} -> x.metadata.pts end, &Ratio.lte?/2)
+
+      if buffer == @eos do
         new_state = Map.delete(state, id)
         get_buffers(new_state, curr)
-
-      {id, buffer} ->
+      else
         new_state = Map.update!(state, id, &tl/1)
         get_buffers(new_state, [buffer | curr])
-    end
-  end
-
-  defp get_buffer(list, current \\ nil)
-  defp get_buffer([], curr), do: curr
-  defp get_buffer([{_id, []} | _tail], _curr), do: nil
-  defp get_buffer([{id, [:end_of_stream]} | _tail], nil), do: {id, :end_of_stream}
-  defp get_buffer([{id, [hd_buffer | _rest]} | tail], nil), do: get_buffer(tail, {id, hd_buffer})
-
-  defp get_buffer([{id_l, [buffer_l | _rest]} | tail], {_id_r, buffer_r} = curr) do
-    use Ratio
-
-    new_curr =
-      if Ratio.lte?(buffer_r.metadata.pts, buffer_l.metadata.pts) do
-        curr
-      else
-        {id_l, buffer_l}
       end
-
-    get_buffer(tail, new_curr)
+    end
   end
 end
