@@ -6,7 +6,8 @@ defmodule Membrane.VideoMerger.IntegrationTest do
   alias Membrane.{File, H264, Pad, Testing, Time, VideoCutter, VideoMerger}
   require Pad
 
-  @framerate 30
+  @fps 30
+  @framerate {@fps, 1}
 
   test "split into two parts and merge again" do
     elems = [
@@ -14,22 +15,18 @@ defmodule Membrane.VideoMerger.IntegrationTest do
         chunk_size: 40_960,
         location: "./test/fixtures/test_video_10s.h264"
       },
-      parser_1: %H264.FFmpeg.Parser{framerate: {@framerate, 1}},
+      parser_1: %H264.FFmpeg.Parser{framerate: @framerate},
       decoder_1: H264.FFmpeg.Decoder,
       file_src_2: %File.Source{
         chunk_size: 40_960,
         location: "./test/fixtures/test_video_10s.h264"
       },
-      parser_2: %H264.FFmpeg.Parser{framerate: {@framerate, 1}},
+      parser_2: %H264.FFmpeg.Parser{framerate: @framerate},
       decoder_2: H264.FFmpeg.Decoder,
+      cutter_1: %VideoCutter{intervals: [{0, Time.seconds(2)}]},
+      cutter_2: %VideoCutter{intervals: [{Time.seconds(2), :infinity}]},
       merger: VideoMerger,
-      sink: Testing.Sink,
-      cutter_1: %VideoCutter{
-        intervals: [{0, Membrane.Time.seconds(2)}]
-      },
-      cutter_2: %VideoCutter{
-        intervals: [{Membrane.Time.seconds(2), :infinity}]
-      }
+      sink: Testing.Sink
     ]
 
     links = [
@@ -55,7 +52,9 @@ defmodule Membrane.VideoMerger.IntegrationTest do
              })
 
     assert Testing.Pipeline.play(pid) == :ok
-    frame_duration = Ratio.new(Time.second(), @framerate)
+    frame_duration = Ratio.new(Time.second(), @fps)
+
+    assert_end_of_stream(pid, :sink, :input, 10_000)
 
     for i <- 0..299 do
       pts = Ratio.mult(frame_duration, i)
@@ -63,7 +62,6 @@ defmodule Membrane.VideoMerger.IntegrationTest do
       assert pts == buffer_pts
     end
 
-    assert_end_of_stream(pid, :sink, :input, 10_000)
-    Testing.Pipeline.stop(pid)
+    Testing.Pipeline.stop_and_terminate(pid, blocking?: true)
   end
 end
