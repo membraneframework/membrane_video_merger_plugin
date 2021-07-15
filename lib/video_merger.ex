@@ -4,7 +4,7 @@ defmodule Membrane.VideoMerger do
 
   The element expects each frame to be received in a separate buffer, so the parser
   (`Membrane.Element.RawVideo.Parser`) may be required in a pipeline before
-  the encoder (e.g. when input is read from `Membrane.File.Source`).
+  the merger (e.g. when input is read from `Membrane.File.Source`).
 
   The element expects to receive frames in order from each input.
 
@@ -51,9 +51,6 @@ defmodule Membrane.VideoMerger do
   def handle_pad_added({_pad, :input, id}, _ctx, state) do
     {:ok, Map.put_new(state, id, [])}
   end
-
-  @impl true
-  def handle_process(pad, buffer, ctx, state), do: handle_process_list(pad, [buffer], ctx, state)
 
   @impl true
   def handle_process_list({_pad, :input, id}, buffers, _context, state) do
