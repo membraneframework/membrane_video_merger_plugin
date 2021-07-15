@@ -21,6 +21,7 @@ defmodule Membrane.Template.Mixfile do
       name: "Membrane Template plugin",
       source_url: @github_url,
       homepage_url: "https://membraneframework.org",
+      test_coverage: [tool: ExCoveralls, test_task: "test.all"],
       docs: docs()
     ]
   end
@@ -41,6 +42,7 @@ defmodule Membrane.Template.Mixfile do
       {:dialyxir, "~> 1.0.0", only: :dev, runtime: false},
       {:credo, "~> 1.4", only: :dev, runtime: false},
       {:membrane_caps_video_raw, "~> 0.1.0"},
+      {:excoveralls, "~> 0.11", only: :test},
       {:membrane_h264_ffmpeg_plugin,
        github: "membraneframework/membrane_h264_ffmpeg_plugin", branch: "master", only: :test},
       {:membrane_file_plugin, "~> 0.6.0", only: :test},

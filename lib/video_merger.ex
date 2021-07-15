@@ -14,11 +14,10 @@ defmodule Membrane.VideoMerger do
   """
 
   use Membrane.Filter
+
+  alias __MODULE__.BufferQueue
   alias Membrane.Caps.Video.Raw
   alias Membrane.Pad
-  alias Membrane.Buffer
-
-  @eos %Buffer{metadata: %{pts: -1}, payload: :end_of_stream}
 
   def_input_pad :input,
     caps: {Raw, aligned: true},
@@ -30,14 +29,14 @@ defmodule Membrane.VideoMerger do
 
   @impl true
   def handle_init(_opts) do
-    {:ok, %{}}
+    {:ok, BufferQueue.new()}
   end
 
   @impl true
   def handle_demand(:output, size, :buffers, _ctx, state) do
     demands =
       state
-      |> get_empty_inputs()
+      |> BufferQueue.get_empty_ids()
       |> Enum.map(&{:demand, {Pad.ref(:input, &1), size}})
 
     {{:ok, demands}, state}
@@ -46,7 +45,7 @@ defmodule Membrane.VideoMerger do
   @impl true
   def handle_end_of_stream({_pad, :input, id} = pad_ref, _ctx, state) do
     state
-    |> Map.update!(id, &(&1 ++ [@eos]))
+    |> BufferQueue.enqueue_eos(id)
     |> get_actions(notify: pad_ref)
   end
 
@@ -62,49 +61,23 @@ defmodule Membrane.VideoMerger do
     end
 
     state
-    |> Map.update!(id, &(&1 ++ buffers))
+    |> BufferQueue.enqueue_list(id, buffers)
     |> get_actions(redemand: :output)
   end
 
-  defp get_empty_inputs(state) do
-    state
-    |> Enum.filter(fn {_id, buffers} -> buffers == [] end)
-    |> Enum.map(fn {id, _val} -> id end)
-  end
-
   defp get_actions(state, fallback) do
-    case get_buffers(state) do
-      {[], new_state} when new_state == %{} ->
-        {{:ok, [end_of_stream: :output] ++ fallback}, %{}}
+    case BufferQueue.dequeue_buffers(state) do
+      {:ok, :end_of_stream} ->
+        {{:ok, fallback ++ [end_of_stream: :output]}, %{}}
 
-      {buffers, new_state} when new_state == %{} ->
-        {{:ok, [end_of_stream: :output, buffers: buffers] ++ fallback}, %{}}
+      {{:ok, buffers: buffers}, :end_of_stream} ->
+        {{:ok, [buffers: buffers] ++ fallback ++ [end_of_stream: :output]}, %{}}
 
-      {[], new_state} ->
+      {:ok, new_state} ->
         {{:ok, fallback}, new_state}
 
-      {buffers, new_state} ->
+      {{:ok, buffers: buffers}, new_state} ->
         {{:ok, buffer: {:output, buffers}}, new_state}
-    end
-  end
-
-  defp get_buffers(state, curr \\ [])
-  defp get_buffers(state, _curr) when state == %{}, do: {[], state}
-
-  defp get_buffers(state, curr) do
-    if Enum.any?(state, fn {_id, buffers} -> buffers == [] end) do
-      {Enum.reverse(curr), state}
-    else
-      {id, [buffer | _rest]} =
-        Enum.min_by(state, fn {_id, [x | _rest]} -> x.metadata.pts end, &Ratio.lte?/2)
-
-      if buffer == @eos do
-        new_state = Map.delete(state, id)
-        get_buffers(new_state, curr)
-      else
-        new_state = Map.update!(state, id, &tl/1)
-        get_buffers(new_state, [buffer | curr])
-      end
     end
   end
 end
