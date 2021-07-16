@@ -23,8 +23,8 @@ defmodule Membrane.VideoMerger.IntegrationTest do
       },
       parser_2: %H264.FFmpeg.Parser{framerate: @framerate},
       decoder_2: H264.FFmpeg.Decoder,
-      cutter_1: %VideoCutter{intervals: [{0, Time.seconds(2)}]},
-      cutter_2: %VideoCutter{intervals: [{Time.seconds(2), :infinity}]},
+      cutter_1: %VideoCutter{intervals: [{0, Time.seconds(1)}]},
+      cutter_2: %VideoCutter{intervals: [{Time.seconds(1), Time.seconds(2)}]},
       merger: VideoMerger,
       sink: Testing.Sink
     ]
@@ -56,7 +56,7 @@ defmodule Membrane.VideoMerger.IntegrationTest do
 
     assert_end_of_stream(pid, :sink, :input, 10_000)
 
-    for i <- 0..299 do
+    for i <- 0..59 do
       pts = Ratio.mult(frame_duration, i)
       assert_sink_buffer(pid, :sink, %Membrane.Buffer{metadata: %{pts: buffer_pts}})
       assert pts == buffer_pts

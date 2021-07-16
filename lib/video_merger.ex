@@ -46,7 +46,7 @@ defmodule Membrane.VideoMerger do
   def handle_end_of_stream({_pad, :input, id} = pad_ref, _ctx, state) do
     state
     |> BufferQueue.enqueue_eos(id)
-    |> get_actions(notify: pad_ref)
+    |> get_actions(pad_ref)
   end
 
   @impl true
@@ -62,21 +62,21 @@ defmodule Membrane.VideoMerger do
 
     state
     |> BufferQueue.enqueue_list(id, buffers)
-    |> get_actions(redemand: :output)
+    |> get_actions()
   end
 
-  defp get_actions(state, fallback) do
+  defp get_actions(state, pad_ref \\ nil) do
     case BufferQueue.dequeue_buffers(state) do
-      {:ok, :end_of_stream} ->
-        {{:ok, fallback ++ [end_of_stream: :output]}, %{}}
+      {:empty, [], new_state} ->
+        {{:ok, [notify: pad_ref, end_of_stream: :output]}, new_state}
 
-      {{:ok, buffers: buffers}, :end_of_stream} ->
-        {{:ok, [buffers: buffers] ++ fallback ++ [end_of_stream: :output]}, %{}}
+      {:empty, buffers, new_state} ->
+        {{:ok, [buffer: {:output, buffers}, notify: pad_ref, end_of_stream: :output]}, new_state}
 
-      {:ok, new_state} ->
-        {{:ok, fallback}, new_state}
+      {:ok, [], new_state} ->
+        {{:ok, redemand: :output}, new_state}
 
-      {{:ok, buffers: buffers}, new_state} ->
+      {:ok, buffers, new_state} ->
         {{:ok, buffer: {:output, buffers}}, new_state}
     end
   end

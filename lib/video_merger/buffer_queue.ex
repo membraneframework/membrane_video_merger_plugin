@@ -44,25 +44,19 @@ defmodule Membrane.VideoMerger.BufferQueue do
   @doc """
   Dequeues and (maybe) returns list of buffers with lowest values.
 
-  If the dequeued buffers are the very last ones, end of stream atom will be
-  returned insted of queue.
+  If the dequeued buffers are the very last ones, `:empty` atom will be
+  returned instead of `:ok`.
 
   A buffer can be dequeued if and only if all of queues have at least one
   buffer.
   """
-  @spec dequeue_buffers(t, [v]) ::
-          {:ok | {:ok, buffers: [v]}, t | :end_of_stream}
+  @spec dequeue_buffers(t, [v]) :: {:ok | :empty, [v], t}
   def dequeue_buffers(queue, curr \\ [])
-
-  def dequeue_buffers(queue, []) when queue == %{}, do: {:ok, :end_of_stream}
-
-  def dequeue_buffers(queue, curr) when queue == %{} do
-    {{:ok, buffers: Enum.reverse(curr)}, :end_of_stream}
-  end
+  def dequeue_buffers(queue, curr) when queue == %{}, do: {:empty, Enum.reverse(curr), queue}
 
   def dequeue_buffers(queue, curr) do
     if Enum.any?(queue, fn {_id, buffers} -> buffers == [] end) do
-      if curr == [], do: {:ok, queue}, else: {{:ok, buffers: Enum.reverse(curr)}, queue}
+      {:ok, Enum.reverse(curr), queue}
     else
       {id, [buffer | _rest]} =
         Enum.min_by(queue, fn {_id, [x | _rest]} -> x.metadata.pts end, &Ratio.lte?/2)
