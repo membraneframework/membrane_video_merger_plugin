@@ -43,10 +43,10 @@ defmodule Membrane.VideoMerger do
   end
 
   @impl true
-  def handle_end_of_stream({_pad, :input, id} = pad_ref, _ctx, state) do
+  def handle_end_of_stream({_pad, :input, id}, _ctx, state) do
     state
     |> BufferQueue.enqueue_eos(id)
-    |> get_actions(pad_ref)
+    |> get_actions()
   end
 
   @impl true
@@ -55,7 +55,7 @@ defmodule Membrane.VideoMerger do
   end
 
   @impl true
-  def handle_process_list({_pad, :input, id}, buffers, _context, state) do
+  def handle_process_list({_pad, :input, id}, buffers, _ctx, state) do
     if not Enum.all?(buffers, &Map.has_key?(&1.metadata, :pts)) do
       raise("Cannot merge stream without pts")
     end
@@ -65,19 +65,17 @@ defmodule Membrane.VideoMerger do
     |> get_actions()
   end
 
-  defp get_actions(state, pad_ref \\ nil) do
-    case BufferQueue.dequeue_buffers(state) do
-      {:empty, [], new_state} ->
-        {{:ok, [notify: pad_ref, end_of_stream: :output]}, new_state}
+  defp get_actions(state) do
+    {atom, buffers, new_state} = BufferQueue.dequeue_buffers(state)
 
-      {:empty, buffers, new_state} ->
-        {{:ok, [buffer: {:output, buffers}, notify: pad_ref, end_of_stream: :output]}, new_state}
+    actions =
+      case {atom, buffers} do
+        {:empty, []} -> [end_of_stream: :output]
+        {:empty, buffers} -> [buffer: {:output, buffers}, end_of_stream: :output]
+        {:ok, []} -> [redemand: :output]
+        {:ok, buffers} -> [buffer: {:output, buffers}]
+      end
 
-      {:ok, [], new_state} ->
-        {{:ok, redemand: :output}, new_state}
-
-      {:ok, buffers, new_state} ->
-        {{:ok, buffer: {:output, buffers}}, new_state}
-    end
+    {{:ok, actions}, new_state}
   end
 end
