@@ -1,10 +1,11 @@
-defmodule Membrane.VideoMergerBin.BinTest do
+defmodule Membrane.VideoCutAndMergeTest do
   use ExUnit.Case, async: true
 
   import Membrane.ParentSpec
   import Membrane.Testing.Assertions
-  alias Membrane.{Buffer, File, H264, Pad, Testing, Time, VideoMergerBin}
-  alias Membrane.VideoMergerBin.Stream
+  alias Membrane.{Buffer, File, H264, Pad, Testing, Time}
+  alias Membrane.VideoCutAndMerge
+  alias Membrane.VideoCutAndMerge.Stream
   require Pad
 
   @fps 30
@@ -27,14 +28,12 @@ defmodule Membrane.VideoMergerBin.BinTest do
   end
 
   defp start_pipeline(streams) do
-    elems = [merger_bin: %VideoMergerBin{streams: streams}, sink: Testing.Sink]
+    elems = [merger_bin: VideoCutAndMerge, sink: Testing.Sink]
     links = [link(:merger_bin) |> to(:sink)]
 
-    {elems, links} =
-      List.foldl(streams, {elems, links}, fn %Stream{id: id}, {elems, links} ->
-        {src_i, parser_i, decoder_i} =
-          {String.to_atom("file_src_#{id}"), String.to_atom("parser_#{id}"),
-           String.to_atom("decoder_#{id}")}
+    {_i, elems, links} =
+      List.foldl(streams, {1, elems, links}, fn stream, {i, elems, links} ->
+        {src_i, parser_i, decoder_i} = {"file_src_#{i}", "parser_#{i}", "decoder_#{i}"}
 
         new_elems = [
           {src_i,
@@ -50,11 +49,11 @@ defmodule Membrane.VideoMergerBin.BinTest do
           link(src_i)
           |> to(parser_i)
           |> to(decoder_i)
-          |> via_in(Pad.ref(:input, id))
+          |> via_in(Pad.ref(:input, i), options: [stream: stream])
           |> to(:merger_bin)
         ]
 
-        {elems ++ new_elems, links ++ new_links}
+        {i + 1, elems ++ new_elems, links ++ new_links}
       end)
 
     Testing.Pipeline.start_link(%Testing.Pipeline.Options{
@@ -65,8 +64,8 @@ defmodule Membrane.VideoMergerBin.BinTest do
 
   test "split into two parts and merge again" do
     streams = [
-      %Stream{id: :first, intervals: [{0, Time.seconds(2)}]},
-      %Stream{id: :second, intervals: [{Time.seconds(2), :infinity}]}
+      %Stream{intervals: [{0, Time.seconds(2)}]},
+      %Stream{intervals: [{Time.seconds(2), :infinity}]}
     ]
 
     run_pipeline_test(streams, 10)
@@ -74,17 +73,13 @@ defmodule Membrane.VideoMergerBin.BinTest do
 
   test "split into five parts and merge again" do
     streams = [
-      %Stream{id: :a, intervals: [{0, Time.seconds(1)}]},
+      %Stream{intervals: [{0, Time.seconds(1)}]},
       %Stream{
-        id: :b,
-        intervals: [
-          {Time.seconds(1), Time.seconds(2)},
-          {Time.seconds(7), Time.seconds(9)}
-        ]
+        intervals: [{Time.seconds(1), Time.seconds(2)}, {Time.seconds(7), Time.seconds(9)}]
       },
-      %Stream{id: :c, intervals: [{Time.seconds(2), Time.seconds(5)}]},
-      %Stream{id: :d, intervals: [{Time.seconds(5), Time.seconds(7)}]},
-      %Stream{id: :e, intervals: [{Time.seconds(9), :infinity}]}
+      %Stream{intervals: [{Time.seconds(2), Time.seconds(5)}]},
+      %Stream{intervals: [{Time.seconds(5), Time.seconds(7)}]},
+      %Stream{intervals: [{Time.seconds(9), :infinity}]}
     ]
 
     run_pipeline_test(streams, 10)

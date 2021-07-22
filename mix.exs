@@ -65,7 +65,10 @@ defmodule Membrane.Template.Mixfile do
       main: "readme",
       extras: ["README.md", "LICENSE"],
       source_ref: "v#{@version}",
-      nest_modules_by_prefix: [Membrane.Template]
+      nest_modules_by_prefix: [Membrane],
+      groups_for_modules: [
+        CutAndMerge: [~r/^Membrane.VideoCutAndMerge.*/]
+      ]
     ]
   end
 end

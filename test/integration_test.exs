@@ -32,8 +32,7 @@ defmodule Membrane.VideoMerger.IntegrationTest do
     {_i, elems, links} =
       List.foldl(cutters, {1, elems, links}, fn cutter, {i, elems, links} ->
         {src_i, parser_i, decoder_i, cutter_i} =
-          {String.to_atom("file_src_#{i}"), String.to_atom("parser_#{i}"),
-           String.to_atom("decoder_#{i}"), String.to_atom("cutter_#{i}")}
+          {"file_src_#{i}", "parser_#{i}", "decoder_#{i}", "cutter_#{i}"}
 
         new_elems = [
           {src_i,
