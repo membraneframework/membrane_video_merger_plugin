@@ -28,14 +28,16 @@ defmodule Membrane.VideoCutAndMergeTest do
   end
 
   defp start_pipeline(streams) do
-    elems = [merger_bin: VideoCutAndMerge, sink: Testing.Sink]
-    links = [link(:merger_bin) |> to(:sink)]
+    elem_names =
+      streams
+      |> Enum.with_index(fn stream, i ->
+        {stream, "file_src_#{i}", "parser_#{i}", "decoder_#{i}"}
+      end)
 
-    {_i, elems, links} =
-      List.foldl(streams, {1, elems, links}, fn stream, {i, elems, links} ->
-        {src_i, parser_i, decoder_i} = {"file_src_#{i}", "parser_#{i}", "decoder_#{i}"}
-
-        new_elems = [
+    elems =
+      elem_names
+      |> Enum.flat_map(fn {_stream, src_i, parser_i, decoder_i} ->
+        [
           {src_i,
            %File.Source{
              chunk_size: 40_960,
@@ -44,17 +46,20 @@ defmodule Membrane.VideoCutAndMergeTest do
           {parser_i, %H264.FFmpeg.Parser{framerate: @framerate}},
           {decoder_i, H264.FFmpeg.Decoder}
         ]
-
-        new_links = [
-          link(src_i)
-          |> to(parser_i)
-          |> to(decoder_i)
-          |> via_in(Pad.ref(:input, i), options: [stream: stream])
-          |> to(:merger_bin)
-        ]
-
-        {i + 1, elems ++ new_elems, links ++ new_links}
       end)
+
+    links =
+      elem_names
+      |> Enum.with_index(fn {stream, src_i, parser_i, decoder_i}, i ->
+        link(src_i)
+        |> to(parser_i)
+        |> to(decoder_i)
+        |> via_in(Pad.ref(:input, i), options: [stream: stream])
+        |> to(:cut_and_merge)
+      end)
+
+    elems = [cut_and_merge: VideoCutAndMerge, sink: Testing.Sink] ++ elems
+    links = [link(:cut_and_merge) |> to(:sink) | links]
 
     Testing.Pipeline.start_link(%Testing.Pipeline.Options{
       elements: elems,

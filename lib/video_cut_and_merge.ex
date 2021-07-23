@@ -24,7 +24,7 @@ defmodule Membrane.VideoCutAndMerge do
     options: [
       stream: [
         spec: Stream.t(),
-        describtion: "List of streams to merge"
+        describtion: "A stream to cut and merge"
       ]
     ]
 
