@@ -26,16 +26,16 @@ defmodule Membrane.VideoMerger.IntegrationTest do
   end
 
   defp start_multiple_cutter_pipeline(cutters) do
-    elems = [merger: VideoMerger, sink: Testing.Sink]
-    links = [link(:merger) |> to(:sink)]
+    elem_names =
+      cutters
+      |> Enum.with_index(fn cutter, i ->
+        {cutter, "file_src_#{i}", "parser_#{i}", "decoder_#{i}", "cutter_#{i}"}
+      end)
 
-    {_i, elems, links} =
-      List.foldl(cutters, {1, elems, links}, fn cutter, {i, elems, links} ->
-        {src_i, parser_i, decoder_i, cutter_i} =
-          {String.to_atom("file_src_#{i}"), String.to_atom("parser_#{i}"),
-           String.to_atom("decoder_#{i}"), String.to_atom("cutter_#{i}")}
-
-        new_elems = [
+    elems =
+      elem_names
+      |> Enum.flat_map(fn {cutter, src_i, parser_i, decoder_i, cutter_i} ->
+        [
           {src_i,
            %File.Source{
              chunk_size: 40_960,
@@ -45,18 +45,21 @@ defmodule Membrane.VideoMerger.IntegrationTest do
           {decoder_i, H264.FFmpeg.Decoder},
           {cutter_i, cutter}
         ]
-
-        new_links = [
-          link(src_i)
-          |> to(parser_i)
-          |> to(decoder_i)
-          |> to(cutter_i)
-          |> via_in(Pad.ref(:input, i))
-          |> to(:merger)
-        ]
-
-        {i + 1, elems ++ new_elems, links ++ new_links}
       end)
+
+    links =
+      elem_names
+      |> Enum.with_index(fn {_cutter, src_i, parser_i, decoder_i, cutter_i}, i ->
+        link(src_i)
+        |> to(parser_i)
+        |> to(decoder_i)
+        |> to(cutter_i)
+        |> via_in(Pad.ref(:input, i))
+        |> to(:merger)
+      end)
+
+    elems = [merger: VideoMerger, sink: Testing.Sink] ++ elems
+    links = [link(:merger) |> to(:sink) | links]
 
     Testing.Pipeline.start_link(%Testing.Pipeline.Options{
       elements: elems,

@@ -1,4 +1,4 @@
-defmodule Membrane.VideoMerger.VideoCutterTest do
+defmodule Membrane.VideoCutterTest do
   use ExUnit.Case, async: true
 
   import Membrane.Testing.Assertions
