@@ -22,7 +22,88 @@ end
 
 ## Usage
 
-The docs can be found at [HexDocs](https://hexdocs.pm/membrane_video_merger_plugin).
+### VideoCutter and VideoMerger
+
+```elixir
+defmodule VideoMerger.Pipeline do
+  use Membrane.Pipeline
+  alias Membrane.Element.RawVideo.Parser
+  alias Membrane.File.{Sink, Source}
+  alias Membrane.{VideoCutter, VideoMerger}
+
+  @impl true
+  def handle_init(_) do
+    children = [
+      file_src_1: %Source{chunk_size: 40_960, location: "/tmp/input_1.raw"},
+      parser_1: %Parser{width: 1280, height: 720, format: :I420},
+      cutter_1: %VideoCutter{intervals: [0, Membrane.Time.seconds(5)]},
+      file_src_2: %Source{chunk_size: 40_960, location: "/tmp/input_2.raw"},
+      parser_2: %Parser{width: 1280, height: 720, format: :I420},
+      cutter_2: %VideoCutter{intervals: [Membrane.Time.seconds(5), :infinity]},
+      merger: VideoMerger,
+      sink: %Sink{location: "/tmp/output.raw"}
+    ]
+
+    links = [
+      link(:file_src_1)
+      |> to(:parser_1)
+      |> to(:cutter_1)
+      |> via_in(Pad.ref(:input, 1))
+      |> to(:merger),
+      link(:file_src_2)
+      |> to(:parser_2)
+      |> to(:cutter_2)
+      |> via_in(Pad.ref(:input, 2))
+      |> to(:merger),
+      link(:merger)
+      |> to(:sink)
+    ]
+
+    {{:ok, spec: %ParentSpec{children: children, links: links}}, %{}}
+  end
+end
+```
+
+### CutAndMerge bin
+
+```elixir
+defmodule VideoCutAndMerge.Pipeline do
+  use Membrane.Pipeline
+  alias Membrane.VideoCutAndMerge
+  alias Membrane.Element.RawVideo.Parser
+  alias Membrane.File.{Sink, Source}
+
+  @impl true
+  def handle_init(_) do
+    children = [
+      file_src_1: %Source{chunk_size: 40_960, location: "/tmp/input_1.raw"},
+      parser_1: %Parser{width: 1280, height: 720, format: :I420},
+      file_src_2: %Source{chunk_size: 40_960, location: "/tmp/input_2.raw"},
+      parser_2: %Parser{width: 1280, height: 720, format: :I420},
+      cut_and_merge: VideoCutAndMerge,
+      sink: %Sink{location: "/tmp/output.raw"}
+    ]
+
+    stream_1 = %VideoCutAndMerge.Stream{intervals: [0, Membrane.Time.seconds(5)]}
+    stream_2 = %VideoCutAndMerge.Stream{intervals: [Membrane.Time.seconds(5), :infinity]}
+
+    links = [
+      link(:file_src_1)
+      |> to(:parser_1)
+      |> via_in(Pad.ref(:input, 1), options: [stream: stream_1])
+      |> to(:cut_and_merge),
+      link(:file_src_2)
+      |> to(:parser_2)
+      |> via_in(Pad.ref(:input, 2), options: [stream: stream_2])
+      |> to(:cut_and_merge),
+      link(:cut_and_merge)
+      |> to(:sink)
+    ]
+
+    {{:ok, spec: %ParentSpec{children: children, links: links}}, %{}}
+  end
+end
+```
 
 ## Copyright and License
 
