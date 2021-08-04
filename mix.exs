@@ -1,24 +1,24 @@
-defmodule Membrane.Template.Mixfile do
+defmodule Membrane.VideoMerger.Mixfile do
   use Mix.Project
 
   @version "0.1.0"
-  @github_url "https://github.com/membraneframework/membrane_template_plugin"
+  @github_url "https://github.com/membraneframework/membrane_video_merger_plugin"
 
   def project do
     [
-      app: :membrane_template_plugin,
+      app: :membrane_video_merger_plugin,
       version: @version,
-      elixir: "~> 1.10",
+      elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
 
       # hex
-      description: "Template Plugin for Membrane Multimedia Framework",
+      description: "Membrane raw video cutter, merger and cut & merge bin",
       package: package(),
 
       # docs
-      name: "Membrane Template plugin",
+      name: "Membrane Video Merger plugin",
       source_url: @github_url,
       homepage_url: "https://membraneframework.org",
       test_coverage: [tool: ExCoveralls, test_task: "test.all"],
@@ -38,7 +38,7 @@ defmodule Membrane.Template.Mixfile do
   defp deps do
     [
       {:membrane_core, "~> 0.7.0"},
-      {:ex_doc, "~> 0.22", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.25", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0.0", only: :dev, runtime: false},
       {:credo, "~> 1.4", only: :dev, runtime: false},
       {:membrane_caps_video_raw, "~> 0.1.0"},
