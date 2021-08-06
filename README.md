@@ -50,16 +50,16 @@ defmodule VideoCutAndMerge.Pipeline do
     children = [
       file_src_1: %Source{chunk_size: 40_960, location: "/tmp/input_1.h264"},
       parser_1: %Parser{framerate: {30, 1}},
-      decoder_1: %Decoder,
+      decoder_1: Decoder,
       file_src_2: %Source{chunk_size: 40_960, location: "/tmp/input_2.h264"},
       parser_2: %Parser{framerate: {30, 1}},
-      decoder_2: %Decoder,
+      decoder_2: Decoder,
       cut_and_merge: VideoCutAndMerge,
       sink: %Sink{location: "/tmp/output.raw"}
     ]
 
-    stream_1 = %VideoCutAndMerge.Stream{intervals: [0, Membrane.Time.seconds(5)]}
-    stream_2 = %VideoCutAndMerge.Stream{intervals: [Membrane.Time.seconds(5), :infinity]}
+    stream_1 = %VideoCutAndMerge.Stream{intervals: [{0, Membrane.Time.seconds(5)}]}
+    stream_2 = %VideoCutAndMerge.Stream{intervals: [{Membrane.Time.seconds(5), :infinity}]}
 
     links = [
       link(:file_src_1)
@@ -86,21 +86,21 @@ end
 ```elixir
 defmodule VideoMerger.Pipeline do
   use Membrane.Pipeline
-  alias Membrane.Element.RawVideo.Parser
+  alias Membrane.H264.FFmpeg.{Parser, Decoder}
   alias Membrane.File.{Sink, Source}
   alias Membrane.{VideoCutter, VideoMerger}
 
   @impl true
   def handle_init(_) do
     children = [
-      file_src_1: %Source{chunk_size: 40_960, location: "/tmp/input_1.raw"},
+      file_src_1: %Source{chunk_size: 40_960, location: "/tmp/input_1.h264"},
+      parser_1: %Parser{framerate: {30, 1}},
+      decoder_1: Decoder,
+      cutter_1: %VideoCutter{intervals: [{0, Membrane.Time.seconds(5)}]},
+      file_src_2: %Source{chunk_size: 40_960, location: "/tmp/input_2.h264"},
       parser_2: %Parser{framerate: {30, 1}},
-      decoder_2: %Decoder,
-      cutter_1: %VideoCutter{intervals: [0, Membrane.Time.seconds(5)]},
-      file_src_2: %Source{chunk_size: 40_960, location: "/tmp/input_2.raw"},
-      parser_2: %Parser{framerate: {30, 1}},
-      decoder_2: %Decoder,
-      cutter_2: %VideoCutter{intervals: [Membrane.Time.seconds(5), :infinity]},
+      decoder_2: Decoder,
+      cutter_2: %VideoCutter{intervals: [{Membrane.Time.seconds(5), :infinity}]},
       merger: VideoMerger,
       sink: %Sink{location: "/tmp/output.raw"}
     ]
