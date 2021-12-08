@@ -37,8 +37,11 @@ defmodule Membrane.VideoCutterTest do
     # input video has 10[s] * 30[frames/s] = 300[frames]
     # there should be 300[frames] - (4-1)[s] * 30[frames/s] = 210[frames]
     # on the testing sink with the following timestamps
-    first_interval_pts_list = for i <- 0..29, do: Ratio.mult(frame_duration, i)
-    second_interval_pts_list = for i <- 120..299, do: Ratio.mult(frame_duration, i)
+    first_interval_pts_list = for i <- 0..29, do: i |> Ratio.mult(frame_duration) |> Ratio.trunc()
+
+    second_interval_pts_list =
+      for i <- 120..299, do: i |> Ratio.mult(frame_duration) |> Ratio.trunc()
+
     expected_pts_list = first_interval_pts_list ++ second_interval_pts_list
 
     assert {:ok, pid} = make_pipeline_with_testing_sink(video_cutter)
@@ -46,8 +49,8 @@ defmodule Membrane.VideoCutterTest do
 
     expected_pts_list
     |> Enum.each(fn expected_pts ->
-      assert_sink_buffer(pid, :sink, %Membrane.Buffer{metadata: %{pts: buffer_pts}})
-      assert expected_pts == buffer_pts
+      assert_sink_buffer(pid, :sink, %Membrane.Buffer{pts: buffer_pts})
+      assert buffer_pts == expected_pts
     end)
 
     assert_end_of_stream(pid, :sink, :input, 10_000)
@@ -66,10 +69,10 @@ defmodule Membrane.VideoCutterTest do
     }
 
     first_interval_pts_list =
-      for i <- 0..29, do: Ratio.mult(frame_duration, i) |> Ratio.add(offset)
+      for i <- 0..29, do: i |> Ratio.mult(frame_duration) |> Ratio.add(offset) |> Ratio.trunc()
 
     second_interval_pts_list =
-      for i <- 120..299, do: Ratio.mult(frame_duration, i) |> Ratio.add(offset)
+      for i <- 120..299, do: i |> Ratio.mult(frame_duration) |> Ratio.add(offset) |> Ratio.trunc()
 
     expected_pts_list = first_interval_pts_list ++ second_interval_pts_list
 
@@ -78,8 +81,8 @@ defmodule Membrane.VideoCutterTest do
 
     expected_pts_list
     |> Enum.each(fn expected_pts ->
-      assert_sink_buffer(pid, :sink, %Membrane.Buffer{metadata: %{pts: buffer_pts}})
-      assert expected_pts == buffer_pts
+      assert_sink_buffer(pid, :sink, %Membrane.Buffer{pts: buffer_pts})
+      assert buffer_pts == expected_pts
     end)
 
     assert_end_of_stream(pid, :sink, :input, 10_000)

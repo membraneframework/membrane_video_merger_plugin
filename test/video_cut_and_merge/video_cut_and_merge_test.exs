@@ -19,9 +19,9 @@ defmodule Membrane.VideoCutAndMergeTest do
     assert_end_of_stream(pid, :sink, :input, 10_000)
 
     for i <- 0..(test_length * @fps - 1) do
-      pts = Ratio.mult(frame_duration, i)
-      assert_sink_buffer(pid, :sink, %Buffer{metadata: %{pts: buffer_pts}})
-      assert pts == buffer_pts
+      pts = Ratio.mult(frame_duration, i) |> Ratio.trunc()
+      assert_sink_buffer(pid, :sink, %Buffer{pts: buffer_pts})
+      assert buffer_pts == pts
     end
 
     Testing.Pipeline.stop_and_terminate(pid, blocking?: true)
