@@ -7,7 +7,7 @@ defmodule Membrane.VideoMerger.BufferQueue do
   @type v :: Buffer.t()
   @type t :: map
 
-  @eos %Buffer{metadata: %{pts: -1}, payload: :end_of_stream}
+  @eos %Buffer{payload: :end_of_stream, pts: -1}
 
   @doc """
   Creates an empty queue.
@@ -59,7 +59,7 @@ defmodule Membrane.VideoMerger.BufferQueue do
       {:ok, Enum.reverse(curr), queue}
     else
       {id, [buffer | _rest]} =
-        Enum.min_by(queue, fn {_id, [x | _rest]} -> x.metadata.pts end, &Ratio.lte?/2)
+        Enum.min_by(queue, fn {_id, [x | _rest]} -> x.pts end, &Ratio.lte?/2)
 
       if buffer == @eos do
         new_state = Map.delete(queue, id)
