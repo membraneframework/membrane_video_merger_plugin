@@ -42,7 +42,7 @@ defmodule Membrane.VideoMerger.Mixfile do
       {:dialyxir, "~> 1.0.0", only: :dev, runtime: false},
       {:credo, "~> 1.4", only: :dev, runtime: false},
       {:membrane_caps_video_raw, "~> 0.1.0"},
-      {:membrane_h264_ffmpeg_plugin, "~> 0.15.0"},
+      {:membrane_h264_ffmpeg_plugin, "~> 0.16.1"},
       {:excoveralls, "~> 0.11", only: :test},
       {:membrane_file_plugin, "~> 0.7.0", only: :test},
       {:ratio, "~> 2.4"}
