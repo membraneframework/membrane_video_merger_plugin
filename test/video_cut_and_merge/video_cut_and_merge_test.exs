@@ -2,32 +2,22 @@ defmodule Membrane.VideoCutAndMergeTest do
   use ExUnit.Case, async: true
 
   import Membrane.ParentSpec
-  import Membrane.Testing.Assertions
-  alias Membrane.{Buffer, File, H264, Pad, Testing, Time}
+  alias Membrane.{File, H264, Pad, Testing, Time}
   alias Membrane.VideoCutAndMerge
   alias Membrane.VideoCutAndMerge.Stream
+  alias Membrane.VideoMerger.Support
   require Pad
 
   @fps 30
   @framerate {@fps, 1}
 
   defp run_pipeline_test(streams, test_length) do
-    assert {:ok, pid} = start_pipeline(streams)
-    assert(Testing.Pipeline.play(pid) == :ok)
-    frame_duration = Ratio.new(Time.second(), @fps)
-
-    assert_end_of_stream(pid, :sink, :input, 10_000)
-
-    for i <- 0..(test_length * @fps - 1) do
-      pts = Ratio.mult(frame_duration, i) |> Ratio.trunc()
-      assert_sink_buffer(pid, :sink, %Buffer{pts: buffer_pts})
-      assert buffer_pts == pts
-    end
-
-    Testing.Pipeline.stop_and_terminate(pid, blocking?: true)
+    opts = get_pipeline_opts(streams)
+    indicies = 0..(test_length * @fps - 1)
+    Support.run_test(opts, indicies, @framerate)
   end
 
-  defp start_pipeline(streams) do
+  defp get_pipeline_opts(streams) do
     elem_names =
       streams
       |> Enum.with_index(fn stream, i ->
@@ -61,10 +51,10 @@ defmodule Membrane.VideoCutAndMergeTest do
     elems = [cut_and_merge: VideoCutAndMerge, sink: Testing.Sink] ++ elems
     links = [link(:cut_and_merge) |> to(:sink) | links]
 
-    Testing.Pipeline.start_link(%Testing.Pipeline.Options{
+    %Testing.Pipeline.Options{
       elements: elems,
       links: links
-    })
+    }
   end
 
   test "split into two parts and merge again" do
