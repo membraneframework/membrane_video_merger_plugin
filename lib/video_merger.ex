@@ -73,7 +73,7 @@ defmodule Membrane.VideoMerger do
         {:empty, []} -> [end_of_stream: :output]
         {:empty, buffers} -> [buffer: {:output, buffers}, end_of_stream: :output]
         {:ok, []} -> [redemand: :output]
-        {:ok, buffers} -> [buffer: {:output, buffers}]
+        {:ok, buffers} -> [buffer: {:output, buffers}, redemand: :output]
       end
 
     {{:ok, actions}, new_state}
