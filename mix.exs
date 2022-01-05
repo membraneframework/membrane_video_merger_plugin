@@ -38,14 +38,14 @@ defmodule Membrane.VideoMerger.Mixfile do
   defp deps do
     [
       {:membrane_core, "~> 0.8.0"},
-      {:ex_doc, "~> 0.25", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.0.0", only: :dev, runtime: false},
-      {:credo, "~> 1.4", only: :dev, runtime: false},
       {:membrane_caps_video_raw, "~> 0.1.0"},
-      {:membrane_h264_ffmpeg_plugin, "~> 0.14.0"},
+      {:ratio, "~> 2.4"},
       {:excoveralls, "~> 0.11", only: :test},
       {:membrane_file_plugin, "~> 0.7.0", only: :test},
-      {:ratio, "~> 2.4"}
+      {:membrane_h264_ffmpeg_plugin, "~> 0.16.0", only: :test},
+      {:ex_doc, "~> 0.26", only: :dev, runtime: false},
+      {:credo, "~> 1.6", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.1", only: :dev, runtime: false}
     ]
   end
 
