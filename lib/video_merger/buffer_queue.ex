@@ -58,8 +58,7 @@ defmodule Membrane.VideoMerger.BufferQueue do
     if Enum.any?(queue, fn {_id, buffers} -> buffers == [] end) do
       {:ok, Enum.reverse(curr), queue}
     else
-      {id, [buffer | _rest]} =
-        Enum.min_by(queue, fn {_id, [x | _rest]} -> x.pts end, &Ratio.lte?/2)
+      {id, [buffer | _rest]} = Enum.min_by(queue, fn {_id, [x | _rest]} -> x.pts end)
 
       if buffer == @eos do
         new_state = Map.delete(queue, id)

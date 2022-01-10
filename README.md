@@ -13,7 +13,7 @@ Plugin containing elements for cutting and merging raw video. By using this plug
 For most cases, the `VideoCutAndMerge` bin should be your first choice. 
 
 Implementations of the `VideoCutter` and the `VideoMerger` are using presentation timestamps,
-so every `Buffer` should have the `pts` field in the `metadata` map.
+so every `Buffer` should have the `pts` field set.
 
 It is part of [Membrane Multimedia Framework](https://membraneframework.org).
 
@@ -24,7 +24,7 @@ The package can be installed by adding `membrane_video_merger_plugin` to your li
 ```elixir
 def deps do
   [
-    {:membrane_video_merger_plugin, "~> 0.3.0"}
+    {:membrane_video_merger_plugin, "~> 0.3"}
   ]
 end
 ```
