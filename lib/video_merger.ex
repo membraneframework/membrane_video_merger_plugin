@@ -56,7 +56,7 @@ defmodule Membrane.VideoMerger do
 
   @impl true
   def handle_process_list({_pad, :input, id}, buffers, _ctx, state) do
-    if not Enum.all?(buffers, &Map.has_key?(&1.metadata, :pts)) do
+    if Enum.any?(buffers, &is_nil(&1.pts)) do
       raise("Cannot merge stream without pts")
     end
 

@@ -10,6 +10,7 @@ defmodule Membrane.VideoCutter do
   `VideoCutter` will "filter" out all frames with timestamps outside of them.
   """
   use Membrane.Filter
+  alias Membrane.Buffer
   alias Membrane.Caps.Video.Raw
 
   def_options intervals: [
@@ -57,11 +58,13 @@ defmodule Membrane.VideoCutter do
   end
 
   @impl true
-  def handle_process(:input, buffer, _ctx, state) do
-    if not Map.has_key?(buffer.metadata, :pts), do: raise("Cannot cut stream without pts")
+  def handle_process(_pad, %Buffer{pts: nil}, _ctx, _state),
+    do: raise("Cannot cut stream without pts")
 
+  @impl true
+  def handle_process(:input, buffer, _ctx, state) do
     actions =
-      if within_any_interval?(buffer.metadata.pts, state.intervals),
+      if within_any_interval?(buffer.pts, state.intervals),
         do: [buffer: {:output, [apply_offset(buffer, state.offset)]}],
         else: [redemand: :output]
 
@@ -73,22 +76,20 @@ defmodule Membrane.VideoCutter do
     {{:ok, end_of_stream: :output, notify: {:end_of_stream, :input}}, state}
   end
 
-  defp apply_offset(buffer, offset) do
-    Bunch.Struct.update_in(buffer, [:metadata, :pts], &Ratio.add(&1, offset))
+  defp apply_offset(%Buffer{pts: pts} = buffer, offset) do
+    %Buffer{buffer | pts: pts + offset}
   end
 
   defp within_any_interval?(timestamp, intervals) do
-    use Ratio
-
     Enum.any?(intervals, fn
       {:infinity, _any} ->
         false
 
       {start, :infinity} ->
-        Ratio.gte?(timestamp, start)
+        timestamp >= start
 
       {start, stop} ->
-        Ratio.gte?(timestamp, start) and Ratio.lt?(timestamp, stop)
+        timestamp >= start and timestamp < stop
     end)
   end
 end

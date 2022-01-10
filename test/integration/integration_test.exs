@@ -2,30 +2,20 @@ defmodule Membrane.VideoMerger.IntegrationTest do
   use ExUnit.Case, async: true
 
   import Membrane.ParentSpec
-  import Membrane.Testing.Assertions
   alias Membrane.{File, H264, Pad, Testing, Time, VideoCutter, VideoMerger}
+  alias Membrane.VideoMerger.Support
   require Pad
 
   @fps 30
   @framerate {@fps, 1}
 
-  defp run_multiple_cutter_test(cutters, test_length) do
-    assert {:ok, pid} = start_multiple_cutter_pipeline(cutters)
-    assert(Testing.Pipeline.play(pid) == :ok)
-    frame_duration = Ratio.new(Time.second(), @fps)
-
-    assert_end_of_stream(pid, :sink, :input, 10_000)
-
-    for i <- 0..(test_length * @fps - 1) do
-      pts = Ratio.mult(frame_duration, i)
-      assert_sink_buffer(pid, :sink, %Membrane.Buffer{metadata: %{pts: buffer_pts}})
-      assert pts == buffer_pts
-    end
-
-    Testing.Pipeline.stop_and_terminate(pid, blocking?: true)
+  defp run_multiple_cutter_pipeline(cutters, test_length) do
+    opts = get_testing_opts(cutters)
+    indicies = 0..(test_length * @fps - 1)
+    Support.run_test(opts, indicies, @framerate)
   end
 
-  defp start_multiple_cutter_pipeline(cutters) do
+  defp get_testing_opts(cutters) do
     elem_names =
       cutters
       |> Enum.with_index(fn cutter, i ->
@@ -61,10 +51,10 @@ defmodule Membrane.VideoMerger.IntegrationTest do
     elems = [merger: VideoMerger, sink: Testing.Sink] ++ elems
     links = [link(:merger) |> to(:sink) | links]
 
-    Testing.Pipeline.start_link(%Testing.Pipeline.Options{
+    %Testing.Pipeline.Options{
       elements: elems,
       links: links
-    })
+    }
   end
 
   test "split into two parts and merge again" do
@@ -73,7 +63,7 @@ defmodule Membrane.VideoMerger.IntegrationTest do
       %VideoCutter{intervals: [{Time.seconds(2), :infinity}]}
     ]
 
-    run_multiple_cutter_test(cutters, 10)
+    run_multiple_cutter_pipeline(cutters, 10)
   end
 
   test "split into four parts and merge again" do
@@ -84,7 +74,7 @@ defmodule Membrane.VideoMerger.IntegrationTest do
       %VideoCutter{intervals: [{Time.seconds(6), Time.seconds(8)}]}
     ]
 
-    run_multiple_cutter_test(cutters, 10)
+    run_multiple_cutter_pipeline(cutters, 10)
   end
 
   test "merge only first two seconds of audio" do
@@ -93,7 +83,7 @@ defmodule Membrane.VideoMerger.IntegrationTest do
       %VideoCutter{intervals: [{Time.seconds(1), Time.seconds(2)}]}
     ]
 
-    run_multiple_cutter_test(cutters, 2)
+    run_multiple_cutter_pipeline(cutters, 2)
   end
 
   test "single cutter" do
@@ -101,6 +91,6 @@ defmodule Membrane.VideoMerger.IntegrationTest do
       %VideoCutter{intervals: [{Time.seconds(0), :infinity}]}
     ]
 
-    run_multiple_cutter_test(cutters, 10)
+    run_multiple_cutter_pipeline(cutters, 10)
   end
 end

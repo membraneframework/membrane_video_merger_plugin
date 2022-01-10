@@ -4,7 +4,7 @@ defmodule Membrane.VideoMerger.BufferQueueTest do
   alias Membrane.Buffer
   alias Membrane.VideoMerger.BufferQueue
 
-  defp buffer(pts), do: %Buffer{metadata: %{pts: pts}, payload: nil}
+  defp buffer(pts), do: %Buffer{pts: pts, payload: nil}
 
   test "empty queue" do
     queue = BufferQueue.new()
