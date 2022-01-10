@@ -81,17 +81,15 @@ defmodule Membrane.VideoCutter do
   end
 
   defp within_any_interval?(timestamp, intervals) do
-    use Ratio
-
     Enum.any?(intervals, fn
       {:infinity, _any} ->
         false
 
       {start, :infinity} ->
-        Ratio.gte?(timestamp, start)
+        timestamp >= start
 
       {start, stop} ->
-        Ratio.gte?(timestamp, start) and Ratio.lt?(timestamp, stop)
+        timestamp >= start and timestamp < stop
     end)
   end
 end
