@@ -63,7 +63,7 @@ defmodule Membrane.VideoCutAndMerge do
 
   @impl true
   def handle_pad_added({_pad, :input, id} = pad_ref, ctx, state) do
-    %Pad.Data{options: %{stream: stream}} = ctx.pads[pad_ref]
+    stream = ctx.pads[pad_ref].options.stream
     cutter = {id, %VideoCutter{intervals: stream.intervals, offset: stream.offset}}
 
     link =
