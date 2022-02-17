@@ -36,20 +36,17 @@ defmodule Membrane.VideoCutter do
               ]
 
   def_output_pad :output,
+    demand_mode: :auto,
     caps: {Raw, aligned: true}
 
   def_input_pad :input,
     caps: {Raw, aligned: true},
+    demand_mode: :auto,
     demand_unit: :buffers
 
   @impl true
   def handle_init(opts) do
     {:ok, opts}
-  end
-
-  @impl true
-  def handle_demand(:output, size, :buffers, _ctx, state) do
-    {{:ok, demand: {:input, size}}, state}
   end
 
   @impl true
@@ -66,7 +63,7 @@ defmodule Membrane.VideoCutter do
     actions =
       if within_any_interval?(buffer.pts, state.intervals),
         do: [buffer: {:output, [apply_offset(buffer, state.offset)]}],
-        else: [redemand: :output]
+        else: []
 
     {{:ok, actions}, state}
   end
