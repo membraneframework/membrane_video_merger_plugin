@@ -24,7 +24,7 @@ The package can be installed by adding `membrane_video_merger_plugin` to your li
 ```elixir
 def deps do
   [
-    {:membrane_video_merger_plugin, "~> 0.3"}
+    {:membrane_video_merger_plugin, "~> 0.4"}
   ]
 end
 ```
