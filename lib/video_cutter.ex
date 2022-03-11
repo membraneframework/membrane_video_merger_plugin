@@ -10,8 +10,8 @@ defmodule Membrane.VideoCutter do
   `VideoCutter` will "filter" out all frames with timestamps outside of them.
   """
   use Membrane.Filter
-  alias Membrane.Buffer
-  alias Membrane.Caps.Video.Raw
+
+  alias Membrane.{Buffer, RawVideo}
 
   def_options intervals: [
                 spec: [{Membrane.Time.t(), Membrane.Time.t() | :infinity}],
@@ -37,10 +37,10 @@ defmodule Membrane.VideoCutter do
 
   def_output_pad :output,
     demand_mode: :auto,
-    caps: {Raw, aligned: true}
+    caps: {RawVideo, aligned: true}
 
   def_input_pad :input,
-    caps: {Raw, aligned: true},
+    caps: {RawVideo, aligned: true},
     demand_mode: :auto,
     demand_unit: :buffers
 

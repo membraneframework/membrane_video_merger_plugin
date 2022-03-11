@@ -16,16 +16,15 @@ defmodule Membrane.VideoMerger do
   use Membrane.Filter
 
   alias __MODULE__.BufferQueue
-  alias Membrane.Caps.Video.Raw
-  alias Membrane.Pad
+  alias Membrane.{Pad, RawVideo}
 
   def_input_pad :input,
-    caps: {Raw, aligned: true},
+    caps: {RawVideo, aligned: true},
     demand_unit: :buffers,
     availability: :on_request
 
   def_output_pad :output,
-    caps: {Raw, aligned: true}
+    caps: {RawVideo, aligned: true}
 
   @impl true
   def handle_init(_opts) do

@@ -12,13 +12,14 @@ defmodule Membrane.VideoCutAndMerge do
   `Membrane.VideoCutter`. Number of elements is constant: cutters are
   created at initialization, one for each stream.
   """
+
   use Membrane.Bin
+
   alias __MODULE__.Stream
-  alias Membrane.Caps.Video.Raw
-  alias Membrane.{Pad, ParentSpec, VideoCutter, VideoMerger}
+  alias Membrane.{Pad, ParentSpec, RawVideo, VideoCutter, VideoMerger}
 
   def_input_pad :input,
-    caps: {Raw, aligned: true},
+    caps: {RawVideo, aligned: true},
     demand_unit: :buffers,
     availability: :on_request,
     options: [
@@ -29,7 +30,7 @@ defmodule Membrane.VideoCutAndMerge do
     ]
 
   def_output_pad :output,
-    caps: {Raw, aligned: true},
+    caps: {RawVideo, aligned: true},
     demand_unit: :buffers
 
   defmodule Stream do
