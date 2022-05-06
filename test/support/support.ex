@@ -9,11 +9,10 @@ defmodule Membrane.VideoMerger.Support do
   @spec run_test(Testing.Pipeline.Options.t(), Enum.t(), {integer(), integer()}) :: :ok
   def run_test(pipeline_opts, indicies, framerate) do
     assert {:ok, pid} = Testing.Pipeline.start_link(pipeline_opts)
-    assert Testing.Pipeline.play(pid) == :ok
     assert_end_of_stream(pid, :sink, :input, 10_000)
 
     check_sunk_buffers(pid, framerate, indicies)
-    Testing.Pipeline.stop_and_terminate(pid, blocking?: true)
+    Testing.Pipeline.terminate(pid, blocking?: true)
   end
 
   defp check_sunk_buffers(pid, {frames, seconds}, buffers_indicies) do
