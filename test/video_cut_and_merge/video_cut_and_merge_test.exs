@@ -2,11 +2,13 @@ defmodule Membrane.VideoCutAndMergeTest do
   use ExUnit.Case, async: true
 
   import Membrane.ParentSpec
+
+  require Membrane.Pad
+
   alias Membrane.{File, H264, Pad, Testing, Time}
   alias Membrane.VideoCutAndMerge
   alias Membrane.VideoCutAndMerge.Stream
   alias Membrane.VideoMerger.Support
-  require Pad
 
   @fps 30
   @framerate {@fps, 1}
