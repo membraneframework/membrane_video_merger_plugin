@@ -37,10 +37,10 @@ defmodule Membrane.VideoCutter do
 
   def_output_pad :output,
     demand_mode: :auto,
-    caps: {RawVideo, aligned: true}
+    accepted_format: %RawVideo{aligned: true}
 
   def_input_pad :input,
-    caps: {RawVideo, aligned: true},
+    accepted_format: %RawVideo{aligned: true},
     demand_mode: :auto,
     demand_unit: :buffers
 

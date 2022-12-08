@@ -19,12 +19,12 @@ defmodule Membrane.VideoMerger do
   alias Membrane.{Pad, RawVideo}
 
   def_input_pad :input,
-    caps: {RawVideo, aligned: true},
+    accepted_format: %RawVideo{aligned: true},
     demand_unit: :buffers,
     availability: :on_request
 
   def_output_pad :output,
-    caps: {RawVideo, aligned: true}
+    accepted_format: %RawVideo{aligned: true}
 
   @impl true
   def handle_init(_opts) do

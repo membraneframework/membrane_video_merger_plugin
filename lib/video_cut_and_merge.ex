@@ -8,7 +8,7 @@ defmodule Membrane.VideoCutAndMerge do
 
   The element expects to receive frames in order from each input.
 
-  The bin consists of single `Membrane.VideoMerger` and mutliple
+  The bin consists of single `Membrane.VideoMerger` and multiple
   `Membrane.VideoCutter`. Number of elements is constant: cutters are
   created at initialization, one for each stream.
   """
@@ -19,7 +19,7 @@ defmodule Membrane.VideoCutAndMerge do
   alias Membrane.{Pad, ParentSpec, RawVideo, VideoCutter, VideoMerger}
 
   def_input_pad :input,
-    caps: {RawVideo, aligned: true},
+    accepted_format: %RawVideo{aligned: true},
     demand_unit: :buffers,
     availability: :on_request,
     options: [
@@ -30,7 +30,7 @@ defmodule Membrane.VideoCutAndMerge do
     ]
 
   def_output_pad :output,
-    caps: {RawVideo, aligned: true},
+    accepted_format: %RawVideo{aligned: true},
     demand_unit: :buffers
 
   defmodule Stream do
