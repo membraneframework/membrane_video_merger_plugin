@@ -1,7 +1,7 @@
 defmodule Membrane.VideoMerger.IntegrationTest do
   use ExUnit.Case, async: true
 
-  import Membrane.ParentSpec
+  import Membrane.ChildrenSpec
 
   require Membrane.Pad
 
@@ -12,51 +12,34 @@ defmodule Membrane.VideoMerger.IntegrationTest do
   @framerate {@fps, 1}
 
   defp run_multiple_cutter_pipeline(cutters, test_length) do
-    opts = get_testing_opts(cutters)
-    indicies = 0..(test_length * @fps - 1)
-    Support.run_test(opts, indicies, @framerate)
+    structure = get_testing_structure(cutters)
+    indices = 0..(test_length * @fps - 1)
+    Support.run_test(structure, indices, @framerate)
   end
 
-  defp get_testing_opts(cutters) do
-    elem_names =
-      cutters
-      |> Enum.with_index(fn cutter, i ->
-        {cutter, "file_src_#{i}", "parser_#{i}", "decoder_#{i}", "cutter_#{i}"}
-      end)
+  defp get_testing_structure(cutters) do
+    structure =
+      Enum.with_index(
+        cutters,
+        fn cutter, i ->
+          child(
+            {:file_src, i},
+            %File.Source{
+              chunk_size: 40_960,
+              location: "./test/fixtures/test_video_10s.h264"
+            }
+          )
+          |> child({:parser, i}, %H264.FFmpeg.Parser{framerate: @framerate})
+          |> child({:decoder, i}, H264.FFmpeg.Decoder)
+          |> child({:cutter, i}, cutter)
+          |> via_in(Pad.ref(:input, i))
+          |> get_child(:merger)
+        end
+      )
 
-    elems =
-      elem_names
-      |> Enum.flat_map(fn {cutter, src_i, parser_i, decoder_i, cutter_i} ->
-        [
-          {src_i,
-           %File.Source{
-             chunk_size: 40_960,
-             location: "./test/fixtures/test_video_10s.h264"
-           }},
-          {parser_i, %H264.FFmpeg.Parser{framerate: @framerate}},
-          {decoder_i, H264.FFmpeg.Decoder},
-          {cutter_i, cutter}
-        ]
-      end)
+    structure = [child(:merger, VideoMerger) |> child(:sink, Testing.Sink)] ++ structure
 
-    links =
-      elem_names
-      |> Enum.with_index(fn {_cutter, src_i, parser_i, decoder_i, cutter_i}, i ->
-        link(src_i)
-        |> to(parser_i)
-        |> to(decoder_i)
-        |> to(cutter_i)
-        |> via_in(Pad.ref(:input, i))
-        |> to(:merger)
-      end)
-
-    elems = [merger: VideoMerger, sink: Testing.Sink] ++ elems
-    links = [link(:merger) |> to(:sink) | links]
-
-    %Testing.Pipeline.Options{
-      elements: elems,
-      links: links
-    }
+    structure
   end
 
   test "split into two parts and merge again" do
