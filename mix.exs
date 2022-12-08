@@ -1,7 +1,7 @@
 defmodule Membrane.VideoMerger.Mixfile do
   use Mix.Project
 
-  @version "0.6.0"
+  @version "0.7.0"
   @github_url "https://github.com/membraneframework/membrane_video_merger_plugin"
 
   def project do
