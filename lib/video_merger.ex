@@ -27,8 +27,8 @@ defmodule Membrane.VideoMerger do
     accepted_format: %RawVideo{aligned: true}
 
   @impl true
-  def handle_init(_opts) do
-    {:ok, BufferQueue.new()}
+  def handle_init(_ctx, _opts) do
+    {[], BufferQueue.new()}
   end
 
   @impl true
@@ -38,7 +38,7 @@ defmodule Membrane.VideoMerger do
       |> BufferQueue.get_empty_ids()
       |> Enum.map(&{:demand, {Pad.ref(:input, &1), size}})
 
-    {{:ok, demands}, state}
+    {demands, state}
   end
 
   @impl true
@@ -50,7 +50,7 @@ defmodule Membrane.VideoMerger do
 
   @impl true
   def handle_pad_added({_pad, :input, id}, _ctx, state) do
-    {:ok, Map.put_new(state, id, [])}
+    {[], Map.put_new(state, id, [])}
   end
 
   @impl true
@@ -75,6 +75,6 @@ defmodule Membrane.VideoMerger do
         {:ok, buffers} -> [buffer: {:output, buffers}, redemand: :output]
       end
 
-    {{:ok, actions}, new_state}
+    {actions, new_state}
   end
 end

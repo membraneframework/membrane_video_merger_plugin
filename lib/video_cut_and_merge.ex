@@ -16,7 +16,7 @@ defmodule Membrane.VideoCutAndMerge do
   use Membrane.Bin
 
   alias __MODULE__.Stream
-  alias Membrane.{Pad, ParentSpec, RawVideo, VideoCutter, VideoMerger}
+  alias Membrane.{Pad, RawVideo, VideoCutter, VideoMerger}
 
   def_input_pad :input,
     accepted_format: %RawVideo{aligned: true},
@@ -54,25 +54,25 @@ defmodule Membrane.VideoCutAndMerge do
   end
 
   @impl true
-  def handle_init(_opts) do
-    children = [{:merger, VideoMerger}]
-    links = [link(:merger) |> to_bin_output]
-    spec = %ParentSpec{children: children, links: links}
+  def handle_init(_ctx, _opts) do
+    structure = child(:merger, VideoMerger) |> bin_output
 
-    {{:ok, spec: spec}, nil}
+    {[spec: structure], nil}
   end
 
+  # TODO Remove this when we have fix in Membrane Core
+  @dialyzer {:nowarn_function, {:handle_pad_added, 3}}
   @impl true
-  def handle_pad_added({_pad, :input, id} = pad_ref, ctx, state) do
+  def handle_pad_added(Pad.ref(:input, id) = pad_ref, ctx, state) do
     stream = ctx.pads[pad_ref].options.stream
-    cutter = {id, %VideoCutter{intervals: stream.intervals, offset: stream.offset}}
 
-    link =
-      link_bin_input(Pad.ref(:input, id))
-      |> to(id)
-      |> via_in(Pad.ref(:input, id))
-      |> to(:merger)
+    structure = [
+      bin_input(pad_ref)
+      |> child({:cutter, id}, %VideoCutter{intervals: stream.intervals, offset: stream.offset})
+      |> via_in(pad_ref)
+      |> get_child(:merger)
+    ]
 
-    {{:ok, spec: %ParentSpec{children: [cutter], links: [link]}}, state}
+    {[spec: structure], state}
   end
 end
