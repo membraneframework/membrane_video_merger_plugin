@@ -60,7 +60,7 @@ defmodule Membrane.VideoCutAndMerge do
     {[spec: structure], nil}
   end
 
-  # TODO Remove this when we have fix in Membrane Core
+  # TODO: Remove this when we have fix in Membrane Core
   @dialyzer {:nowarn_function, {:handle_pad_added, 3}}
   @impl true
   def handle_pad_added(Pad.ref(:input, id) = pad_ref, ctx, state) do
