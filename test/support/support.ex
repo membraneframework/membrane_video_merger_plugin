@@ -6,7 +6,7 @@ defmodule Membrane.VideoMerger.Support do
 
   @maximal_error Membrane.Time.millisecond()
 
-  @spec run_test(Testing.Pipeline.options(), Enum.t(), {integer(), integer()}) :: :ok
+  @spec run_test(Membrane.ChildrenSpec.structure_builder_t(), Enum.t(), {integer(), integer()}) :: :ok
   def run_test(pipeline_structure, indices, framerate) do
     pipeline = Testing.Pipeline.start_link_supervised!(structure: pipeline_structure)
     assert_end_of_stream(pipeline, :sink, :input, 10_000)
