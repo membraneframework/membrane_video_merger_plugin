@@ -6,12 +6,14 @@ defmodule Membrane.VideoMerger.Support do
 
   @maximal_error Membrane.Time.millisecond()
 
-  @spec run_test(Membrane.ChildrenSpec.structure_builder_t(), Enum.t(), {integer(), integer()}) :: :ok
-  def run_test(pipeline_structure, indices, framerate) do
+  @spec run_test([Membrane.ChildrenSpec.structure_builder_t()], Enum.t(), {integer(), integer()}) ::
+          :ok
+  def(run_test(pipeline_structure, indices, framerate)) do
     pipeline = Testing.Pipeline.start_link_supervised!(structure: pipeline_structure)
     assert_end_of_stream(pipeline, :sink, :input, 10_000)
 
     check_sunk_buffers(pipeline, framerate, indices)
+    :ok
   end
 
   defp check_sunk_buffers(pipeline, {frames, seconds}, buffers_indices) do
@@ -21,7 +23,7 @@ defmodule Membrane.VideoMerger.Support do
 
     for expected_pts <- expected do
       assert_sink_buffer(pipeline, :sink, %Buffer{pts: buffer_pts})
-      compare_pts(expected_pts, buffer_pts, exact_result_period)
+      assert compare_pts(expected_pts, buffer_pts, exact_result_period)
     end
   end
 
