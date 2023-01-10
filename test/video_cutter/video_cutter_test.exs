@@ -34,7 +34,7 @@ defmodule Membrane.VideoCutterTest do
 
     structure = get_pipeline_with_testing_sink_structure(video_cutter)
     indices = Enum.flat_map(indices_ranges, &Enum.to_list/1)
-    Support.run_test(structure, indices, @framerate)
+    Support.run_test(structure, indices, @framerate, offset)
   end
 
   test "cut middle 3s" do
