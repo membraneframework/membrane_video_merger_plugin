@@ -37,26 +37,22 @@ defmodule Membrane.VideoCutter do
 
   def_output_pad :output,
     demand_mode: :auto,
-    caps: {RawVideo, aligned: true}
+    accepted_format: %RawVideo{aligned: true}
 
   def_input_pad :input,
-    caps: {RawVideo, aligned: true},
+    accepted_format: %RawVideo{aligned: true},
     demand_mode: :auto,
     demand_unit: :buffers
 
   @impl true
-  def handle_init(opts) do
-    {:ok, opts}
+  def handle_init(_ctx, opts) do
+    {[], opts}
   end
 
   @impl true
-  def handle_prepared_to_playing(_ctx, state) do
-    {:ok, state}
+  def handle_process(_pad, %Buffer{pts: nil}, _ctx, _state) do
+    raise "Cannot cut stream without pts"
   end
-
-  @impl true
-  def handle_process(_pad, %Buffer{pts: nil}, _ctx, _state),
-    do: raise("Cannot cut stream without pts")
 
   @impl true
   def handle_process(:input, buffer, _ctx, state) do
@@ -65,12 +61,12 @@ defmodule Membrane.VideoCutter do
         do: [buffer: {:output, [apply_offset(buffer, state.offset)]}],
         else: []
 
-    {{:ok, actions}, state}
+    {actions, state}
   end
 
   @impl true
   def handle_end_of_stream(:input, _ctx, state) do
-    {{:ok, end_of_stream: :output, notify: {:end_of_stream, :input}}, state}
+    {[end_of_stream: :output], state}
   end
 
   defp apply_offset(%Buffer{pts: pts} = buffer, offset) do

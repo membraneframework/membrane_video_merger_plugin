@@ -24,7 +24,7 @@ The package can be installed by adding `membrane_video_merger_plugin` to your li
 ```elixir
 def deps do
   [
-	{:membrane_video_merger_plugin, "~> 0.6.0"}
+	{:membrane_video_merger_plugin, "~> 0.7.0"}
   ]
 end
 ```
@@ -41,42 +41,34 @@ Both pipelines will result in creating `/tmp/output.raw` file with the first 5 s
 ```elixir
 defmodule VideoCutAndMerge.Pipeline do
   use Membrane.Pipeline
+
   alias Membrane.VideoCutAndMerge
   alias Membrane.H264.FFmpeg.{Parser, Decoder}
   alias Membrane.File.{Sink, Source}
 
   @impl true
-  def handle_init(_) do
-    children = [
-      file_src_1: %Source{chunk_size: 40_960, location: "/tmp/input_1.h264"},
-      parser_1: %Parser{framerate: {30, 1}},
-      decoder_1: Decoder,
-      file_src_2: %Source{chunk_size: 40_960, location: "/tmp/input_2.h264"},
-      parser_2: %Parser{framerate: {30, 1}},
-      decoder_2: Decoder,
-      cut_and_merge: VideoCutAndMerge,
-      sink: %Sink{location: "/tmp/output.raw"}
-    ]
-
+  def handle_init(_ctx, _options) do
     stream_1 = %VideoCutAndMerge.Stream{intervals: [{0, Membrane.Time.seconds(5)}]}
     stream_2 = %VideoCutAndMerge.Stream{intervals: [{Membrane.Time.seconds(5), :infinity}]}
 
-    links = [
-      link(:file_src_1)
-      |> to(:parser_1)
-      |> to(:decoder_1)
+    structure = [
+      child(:cut_and_merge, VideoCutAndMerge)
+      |> child(:sink, %Sink{location: "/tmp/output.raw"}),
+
+      child({:file_src, 1}, %Source{chunk_size: 40_960, location: "/tmp/input_1.h264"})
+      |> child({:parser, 1}, %Parser{framerate: {30, 1}})
+      |> child({:decoder, 1}, Decoder)
       |> via_in(Pad.ref(:input, 1), options: [stream: stream_1])
-      |> to(:cut_and_merge),
-      link(:file_src_2)
-      |> to(:parser_2)
-      |> to(:decoder_2)
+      |> get_child(:cut_and_merge),
+
+      child({:file_src, 2}, %Source{chunk_size: 40_960, location: "/tmp/input_2.h264"})
+      |> child({:parser, 2}, %Parser{framerate: {30, 1}})
+      |> child({:decoder, 2}, Decoder)
       |> via_in(Pad.ref(:input, 2), options: [stream: stream_2])
-      |> to(:cut_and_merge),
-      link(:cut_and_merge)
-      |> to(:sink)
+      |> get_child(:cut_and_merge)
     ]
 
-    {{:ok, spec: %ParentSpec{children: children, links: links}}, %{}}
+    {[spec: structure], %{}}
   end
 end
 ```
@@ -86,43 +78,33 @@ end
 ```elixir
 defmodule VideoMerger.Pipeline do
   use Membrane.Pipeline
+
   alias Membrane.H264.FFmpeg.{Parser, Decoder}
   alias Membrane.File.{Sink, Source}
   alias Membrane.{VideoCutter, VideoMerger}
 
   @impl true
-  def handle_init(_) do
-    children = [
-      file_src_1: %Source{chunk_size: 40_960, location: "/tmp/input_1.h264"},
-      parser_1: %Parser{framerate: {30, 1}},
-      decoder_1: Decoder,
-      cutter_1: %VideoCutter{intervals: [{0, Membrane.Time.seconds(5)}]},
-      file_src_2: %Source{chunk_size: 40_960, location: "/tmp/input_2.h264"},
-      parser_2: %Parser{framerate: {30, 1}},
-      decoder_2: Decoder,
-      cutter_2: %VideoCutter{intervals: [{Membrane.Time.seconds(5), :infinity}]},
-      merger: VideoMerger,
-      sink: %Sink{location: "/tmp/output.raw"}
-    ]
+  def handle_init(_ctx, _options) do
+    structure = [
+      child(:merger, VideoMerger)
+      |> child(:sink, %Sink{location: "/tmp/output.raw"),
 
-    links = [
-      link(:file_src_1)
-      |> to(:parser_1)
-      |> to(:decoder_1)
-      |> to(:cutter_1)
+      child({:file_src, 1}, %Source{chunk_size: 40_960, location: "/tmp/input_1.h264"})
+      |> child({:parser, 1}, %Parser{framerate: {30, 1}})
+      |> child({:decoder, 1}, Decoder)
+      |> child({:cutter, 1}, %VideoCutter{intervals: [{0, Membrane.Time.seconds(5)}]})
       |> via_in(Pad.ref(:input, 1))
-      |> to(:merger),
-      link(:file_src_2)
-      |> to(:parser_2)
-      |> to(:decoder_2)
-      |> to(:cutter_2)
+      |> get_child(:merger),
+
+      child({:file_src, 2}, %Source{chunk_size: 40_960, location: "/tmp/input_2.h264"})
+      |> child({:parser, 2}, %Parser{framerate: {30, 1}})
+      |> child({:decoder, 2}, Decoder)
+      |> child({:cutter, 2}, %VideoCutter{intervals: [{Membrane.Time.seconds(5), :infinity}]})
       |> via_in(Pad.ref(:input, 2))
-      |> to(:merger),
-      link(:merger)
-      |> to(:sink)
+      |> get_child(:merger),
     ]
 
-    {{:ok, spec: %ParentSpec{children: children, links: links}}, %{}}
+    {[spec: structure], %{}}
   end
 end
 ```
