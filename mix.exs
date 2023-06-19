@@ -1,7 +1,7 @@
 defmodule Membrane.VideoMerger.Mixfile do
   use Mix.Project
 
-  @version "0.7.0"
+  @version "0.8.0"
   @github_url "https://github.com/membraneframework/membrane_video_merger_plugin"
 
   def project do
@@ -37,12 +37,12 @@ defmodule Membrane.VideoMerger.Mixfile do
 
   defp deps do
     [
-      {:membrane_core, "~> 0.11.0"},
-      {:membrane_raw_video_format, "~> 0.2.0"},
+      {:membrane_core, "~> 0.12.0"},
+      {:membrane_raw_video_format, "~> 0.3.0"},
       {:ratio, "~> 2.4"},
       {:excoveralls, "~> 0.11", only: :test},
-      {:membrane_file_plugin, "~> 0.13", only: :test},
-      {:membrane_h264_ffmpeg_plugin, "~> 0.22", only: :test},
+      {:membrane_file_plugin, "~> 0.14.0", only: :test},
+      {:membrane_h264_ffmpeg_plugin, "~> 0.27.0", only: :test},
       {:ex_doc, "~> 0.28", only: :dev, runtime: false},
       {:credo, "~> 1.6", only: :dev, runtime: false},
       {:dialyxir, "~> 1.1", only: :dev, runtime: false}

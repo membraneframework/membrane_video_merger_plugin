@@ -3,7 +3,7 @@ defmodule Membrane.VideoMerger.BufferQueue do
 
   alias Membrane.{Buffer, Pad}
 
-  @type k :: Pad.dynamic_id_t()
+  @type k :: Pad.dynamic_id()
   @type v :: Buffer.t()
   @type t :: map
 
