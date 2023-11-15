@@ -20,7 +20,6 @@ defmodule Membrane.VideoCutAndMerge do
 
   def_input_pad :input,
     accepted_format: %RawVideo{aligned: true},
-    demand_unit: :buffers,
     availability: :on_request,
     options: [
       stream: [
@@ -29,9 +28,7 @@ defmodule Membrane.VideoCutAndMerge do
       ]
     ]
 
-  def_output_pad :output,
-    accepted_format: %RawVideo{aligned: true},
-    demand_unit: :buffers
+  def_output_pad :output, accepted_format: %RawVideo{aligned: true}
 
   defmodule Stream do
     @moduledoc """

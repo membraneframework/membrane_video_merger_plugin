@@ -14,19 +14,20 @@ defmodule Membrane.VideoMerger.Support do
         ) ::
           :ok
   def run_test(pipeline_structure, indices, framerate, offset \\ 0) do
-    pipeline = Testing.Pipeline.start_link_supervised!(structure: pipeline_structure)
+    pipeline = Testing.Pipeline.start_link_supervised!(spec: pipeline_structure)
     assert_end_of_stream(pipeline, :sink, :input, 10_000)
 
     check_sunk_buffers(pipeline, framerate, indices, offset)
-    :ok
+
+    Testing.Pipeline.terminate(pipeline)
   end
 
   defp check_sunk_buffers(pipeline, {frames, seconds}, buffers_indices, offset) do
-    frame_duration = Ratio.new(Membrane.Time.second() * seconds, frames)
+    frame_duration = Numbers.div(Membrane.Time.second() * seconds, frames)
 
     expected =
       for i <- buffers_indices do
-        i |> Ratio.mult(frame_duration) |> Ratio.add(offset) |> Ratio.trunc()
+        i |> Numbers.mult(frame_duration) |> Numbers.add(offset) |> Ratio.trunc()
       end
 
     exact_result_period = seconds |> Membrane.Time.seconds()
