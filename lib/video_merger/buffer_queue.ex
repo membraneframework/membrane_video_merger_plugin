@@ -29,7 +29,7 @@ defmodule Membrane.VideoMerger.BufferQueue do
   Enqueues list of buffers to queue of given id.
   """
   @spec enqueue_list(t, k, [v]) :: t
-  def enqueue_list(queue, id, buffers), do: Map.update(queue, id, [buffers], &(&1 ++ buffers))
+  def enqueue_list(queue, id, buffers), do: Map.update(queue, id, buffers, &(&1 ++ buffers))
 
   @doc """
   Enqueues end of stream buffer to queue of given id.

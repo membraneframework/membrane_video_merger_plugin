@@ -20,7 +20,7 @@ defmodule Membrane.VideoCutterTest do
         location: "./test/fixtures/test_video_10s.h264"
       }
     )
-    |> child(:parser, %H264.FFmpeg.Parser{framerate: @framerate})
+    |> child(:parser, %H264.Parser{generate_best_effort_timestamps: %{framerate: @framerate}})
     |> child(:decoder, H264.FFmpeg.Decoder)
     |> child(:video_cutter, video_cutter)
     |> child(:sink, Testing.Sink)

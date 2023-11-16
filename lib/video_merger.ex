@@ -20,10 +20,12 @@ defmodule Membrane.VideoMerger do
 
   def_input_pad :input,
     accepted_format: %RawVideo{aligned: true},
+    flow_control: :manual,
     demand_unit: :buffers,
     availability: :on_request
 
   def_output_pad :output,
+    flow_control: :manual,
     accepted_format: %RawVideo{aligned: true}
 
   @impl true
@@ -54,13 +56,13 @@ defmodule Membrane.VideoMerger do
   end
 
   @impl true
-  def handle_process_list({_pad, :input, id}, buffers, _ctx, state) do
-    if Enum.any?(buffers, &is_nil(&1.pts)) do
-      raise("Cannot merge stream without pts")
+  def handle_buffer({_pad, :input, id}, buffer, _ctx, state) do
+    if buffer.pts == nil do
+      raise "Cannot merge stream without pts"
     end
 
     state
-    |> BufferQueue.enqueue_list(id, buffers)
+    |> BufferQueue.enqueue_list(id, [buffer])
     |> get_actions()
   end
 

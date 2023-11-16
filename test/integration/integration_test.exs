@@ -29,7 +29,9 @@ defmodule Membrane.VideoMerger.IntegrationTest do
               location: "./test/fixtures/test_video_10s.h264"
             }
           )
-          |> child({:parser, i}, %H264.FFmpeg.Parser{framerate: @framerate})
+          |> child({:parser, i}, %H264.Parser{
+            generate_best_effort_timestamps: %{framerate: @framerate}
+          })
           |> child({:decoder, i}, H264.FFmpeg.Decoder)
           |> child({:cutter, i}, cutter)
           |> via_in(Pad.ref(:input, i))
