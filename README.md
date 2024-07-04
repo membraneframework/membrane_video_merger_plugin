@@ -7,10 +7,10 @@
 Plugin containing elements for cutting and merging raw video. By using this plugin you can
   - simply merge multiple video tracks (`VideoMerger`)
   - cut out specific intervals of video track (`VideoCutter`)
-  - combine chosen parts raw video tracks into one (`VideoCutAndMerge`), for instance by taking 
+  - combine chosen parts raw video tracks into one (`VideoCutAndMerge`), for instance by taking
   the first half of one track and combining it with the second half of another
 
-For most cases, the `VideoCutAndMerge` bin should be your first choice. 
+For most cases, the `VideoCutAndMerge` bin should be your first choice.
 
 Implementations of the `VideoCutter` and the `VideoMerger` are using presentation timestamps,
 so every `Buffer` should have the `pts` field set.
@@ -24,14 +24,14 @@ The package can be installed by adding `membrane_video_merger_plugin` to your li
 ```elixir
 def deps do
   [
-    {:membrane_video_merger_plugin, "~> 0.9.0"}
+    {:membrane_video_merger_plugin, "~> 0.9.1"}
   ]
 end
 ```
 
 ## Sample Usage
 
-Both pipelines will result in creating `/tmp/output.raw` file with the first 5 seconds of the 
+Both pipelines will result in creating `/tmp/output.raw` file with the first 5 seconds of the
 `input_1` track and everything but the first 5 seconds of the `input_2` track.
 
 `/tmp/input_1.h264` and `/tmp/input_2.h264` should be an H264 video files.
