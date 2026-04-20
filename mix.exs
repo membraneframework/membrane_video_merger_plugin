@@ -1,7 +1,7 @@
 defmodule Membrane.VideoMerger.Mixfile do
   use Mix.Project
 
-  @version "0.9.1"
+  @version "0.9.2"
   @github_url "https://github.com/membraneframework/membrane_video_merger_plugin"
 
   def project do
@@ -14,7 +14,7 @@ defmodule Membrane.VideoMerger.Mixfile do
       deps: deps(),
 
       # hex
-      description: "Membrane raw video cutter, merger and cut & merge bin",
+      description: "Cuts and merges multiple raw video tracks using presentation timestamps.",
       package: package(),
 
       # docs
@@ -22,7 +22,8 @@ defmodule Membrane.VideoMerger.Mixfile do
       source_url: @github_url,
       homepage_url: "https://membraneframework.org",
       test_coverage: [tool: ExCoveralls, test_task: "test.all"],
-      docs: docs()
+      docs: docs(),
+      aliases: [docs: ["docs", &prepend_llms_links/1]]
     ]
   end
 
@@ -43,7 +44,7 @@ defmodule Membrane.VideoMerger.Mixfile do
       {:membrane_file_plugin, "~> 0.16.0", only: :test},
       {:membrane_h264_plugin, "~> 0.9.0", only: :test},
       {:membrane_h264_ffmpeg_plugin, "~> 0.31.0", only: :test},
-      {:ex_doc, "~> 0.28", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.40", only: :dev, runtime: false},
       {:credo, "~> 1.6", only: :dev, runtime: false},
       {:dialyxir, "~> 1.1", only: :dev, runtime: false}
     ]
@@ -64,12 +65,33 @@ defmodule Membrane.VideoMerger.Mixfile do
     [
       main: "readme",
       extras: ["README.md", "LICENSE"],
-      formatters: ["html"],
       source_ref: "v#{@version}",
       nest_modules_by_prefix: [Membrane],
       groups_for_modules: [
         CutAndMerge: [~r/^Membrane.VideoCutAndMerge.*/]
       ]
     ]
+  end
+
+  defp prepend_llms_links(_) do
+    output_dir = docs()[:output] || "doc"
+    path = Path.join(output_dir, "llms.txt")
+
+    if File.exists?(path) do
+      existing = File.read!(path)
+
+      footer = """
+
+
+      ## See Also
+
+      - [Membrane Framework AI Skill](https://hexdocs.pm/membrane_core/skill.md)
+      - [Membrane Core](https://hexdocs.pm/membrane_core/llms.txt)
+      """
+
+      File.write!(path, String.trim_trailing(existing) <> footer)
+    else
+      IO.warn("#{path} not found — llms.txt was not generated, check your ex_doc configuration")
+    end
   end
 end
