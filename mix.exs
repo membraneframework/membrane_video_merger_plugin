@@ -12,6 +12,7 @@ defmodule Membrane.VideoMerger.Mixfile do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      dialyzer: dialyzer(),
 
       # hex
       description: "Membrane raw video cutter, merger and cut & merge bin",
@@ -43,10 +44,25 @@ defmodule Membrane.VideoMerger.Mixfile do
       {:membrane_file_plugin, "~> 0.16.0", only: :test},
       {:membrane_h264_plugin, "~> 0.9.0", only: :test},
       {:membrane_h264_ffmpeg_plugin, "~> 0.31.0", only: :test},
-      {:ex_doc, "~> 0.28", only: :dev, runtime: false},
-      {:credo, "~> 1.6", only: :dev, runtime: false},
-      {:dialyxir, "~> 1.1", only: :dev, runtime: false}
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false},
+      {:credo, "~> 1.7", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.4", only: :dev, runtime: false}
     ]
+  end
+
+  defp dialyzer() do
+    opts = [
+      flags: [:error_handling],
+      plt_add_apps: [:mix, :syntax_tools]
+    ]
+
+    if System.get_env("CI") == "true" do
+      # Store PLTs in cacheable directory for CI
+      File.mkdir_p!(Path.join([__DIR__, "priv", "plts"]))
+      [plt_local_path: "priv/plts", plt_core_path: "priv/plts"] ++ opts
+    else
+      opts
+    end
   end
 
   defp package do
